@@ -1,0 +1,71 @@
+@let isHandset = this.isHandset();
+
+<mat-sidenav-container class="sidenav-container">
+    <mat-sidenav
+        #drawer
+        class="sidenav"
+        fixedInViewport
+        [attr.role]="isHandset ? 'dialog' : 'navigation'"
+        [mode]="isHandset ? 'over' : 'side'"
+        [opened]="!isHandset"
+    >
+        <mat-toolbar>Menu</mat-toolbar>
+        <mat-nav-list>
+            <a mat-list-item routerLink="scanner" routerLinkActive="active-link"
+               [routerLinkActiveOptions]="{ exact: true }">
+                <mat-icon matListItemIcon>radar</mat-icon>
+                <span matListItemTitle>Сканер</span>
+            </a>
+            <a mat-list-item routerLink="sorter" routerLinkActive="active-link">
+                <mat-icon matListItemIcon>move_to_inbox</mat-icon>
+                <span matListItemTitle>Сортировщик</span>
+            </a>
+            <a mat-list-item routerLink="/about" routerLinkActive="active-link">
+                <mat-icon matListItemIcon>info</mat-icon>
+                <span matListItemTitle>О программе</span>
+            </a>
+        </mat-nav-list>
+    </mat-sidenav>
+    <mat-sidenav-content>
+        <mat-toolbar color="primary">
+            @if (isHandset) {
+                <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()">
+                    <mat-icon>menu</mat-icon>
+                </button>
+            }
+            <span>File Flow</span>
+
+            <span class="spacer" style="flex: 1 1 auto;"></span>
+
+            <!-- Блок управления темой в тулбаре -->
+            <div class="theme-control-group">
+                <span class="theme-group-title">Тема</span>
+                <div class="theme-controls-row">
+                    <!-- Тумблер Авто-режима -->
+                    <mat-slide-toggle
+                            [checked]="themeService.isAutoTheme()"
+                            (change)="themeService.setAutoMode($event.checked)">
+                        @if (themeService.isAutoTheme()) {
+                            <span class="slide-toggle-label">Системная</span>
+                        } @else {
+                            <span class="slide-toggle-label">Ручная</span>
+                        }
+                    </mat-slide-toggle>
+
+                    <!-- Кнопка ручного переключения (активна, только если Авто выключен) -->
+                    <button
+                            mat-icon-button
+                            [disabled]="themeService.isAutoTheme()"
+                            (click)="themeService.toggleManualTheme()"
+                            [matTooltip]="themeService.isAutoTheme() ? 'Включен авто-режим (по системе)' : 'Сменить тему'">
+                        <mat-icon>
+                            {{ themeService.isDarkMode() ? 'light_mode' : 'dark_mode' }}
+                        </mat-icon>
+                    </button>
+                </div>
+            </div>
+        </mat-toolbar>
+        <!-- Add Content Here -->
+        <router-outlet></router-outlet>
+    </mat-sidenav-content>
+</mat-sidenav-container>

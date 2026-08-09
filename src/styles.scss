@@ -1,0 +1,231 @@
+// Подключаем стандартные стили Angular Material
+@use '@angular/material' as mat;
+
+// Включаем базовые стили Material
+@include mat.core();
+
+// Определяем палитры для тем
+// Используем стандартные цвета (например, indigo для primary и pink для accent)
+$my-light-theme: mat.define-theme((
+        color: (
+                theme-type: light,
+                primary: mat.$azure-palette,
+                tertiary: mat.$blue-palette,
+        )
+));
+
+$my-dark-theme: mat.define-theme((
+        color: (
+                theme-type: dark,
+                primary: mat.$cyan-palette,
+                tertiary: mat.$orange-palette,
+        )
+));
+
+// Применяем светлую тему по умолчанию для всего приложения
+html {
+  @include mat.all-component-themes($my-light-theme);
+  color-scheme: light;
+}
+
+// Если на body висит класс 'dark-theme', переключаем переменные на темную палитру
+body.dark-theme {
+  @include mat.all-component-themes($my-dark-theme);
+  color-scheme: dark;
+}
+
+/* Общие базовые стили приложения */
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  // Плавный переход цветов при переключении тем
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* You can add global styles to this file, and also import other style files */
+/* Отключаем выделение текста по всему приложению, как в нативных программах */
+body {
+  -webkit-user-select: none; /* Safari */
+  user-select: none; /* Стандартный CSS */
+}
+
+/* Если в каких-то полях (например, в инпутах или текстовых областях) текст всё же нужно разрешать выделять и копировать */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+
+.app-page-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* Единый футер для кнопок во всех карточках (прижимает кнопку вправо) */
+.actions-footer {
+  display: flex !important;
+  justify-content: flex-end !important;
+  width: 100% !important;
+  padding: 0 16px 16px 16px !important;
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   ГЛОБАЛЬНЫЕ УНИФИЦИРОВАННЫЕ КОМПОНЕНТЫ (для переиспользования во всем проекте)
+   ========================================================================== */
+
+
+/* Стили для ТЕМНОЙ темы (когда у родителя есть класс .dark-theme) */
+.dark-theme, body.dark-theme, .mat-app-background.dark-theme {
+  .app-scroll-container {
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3); // Светлый полупрозрачный ползунок для темной темы
+      border-radius: 4px;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+
+  /* Унифицированный элемент списка файла */
+  .app-file-item {
+    border-bottom: 1px solid rgba(225, 225, 225, 0.04);
+
+    &:hover {
+      background-color: rgba(225, 225, 225, 0.03);
+    }
+  }
+}
+
+/* Общий контейнер вертикальной прокрутки для любых списков */
+.app-scroll-container {
+  max-height: 450px;
+  overflow-y: auto;
+  padding-right: 8px;
+  box-sizing: border-box;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  /* Стили для СВЕТЛОЙ темы (по умолчанию) */
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.4);
+    }
+  }
+}
+
+/* Общий список элементов (файлов) */
+.app-file-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Унифицированный элемент списка файла */
+.app-file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  gap: 16px;
+  width: 100%; /* Занимаем ровно 100% ширины */
+  box-sizing: border-box;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+}
+
+/* Блок деталей файла (имя + полный путь с переносом по словам/слешам) */
+.app-file-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.app-file-name {
+  font-size: 13px;
+  font-weight: 500;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.app-file-path {
+  font-size: 11px;
+  opacity: 0.6;
+  word-break: normal;
+  overflow-wrap: anywhere; /* Аккуратный перенос длинных путей без уродливых разрывов посреди слова, если есть где перенести */
+  margin-top: 2px;
+}
+
+/* Карточка для группировки (дубликаты и т.д.) */
+.app-group-card {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: transparent;
+  max-width: 100%; /* Защита от расширения за пределы контейнера */
+  box-sizing: border-box;
+  overflow: hidden; /* Скрываем всё, что пытается вылезти наружу */
+}
+
+.app-group-header {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  opacity: 0.8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.app-group-header-category {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Текстовые акценты */
+.app-category-highlight {
+  color: #1976d2;
+}
+
+.app-group-wasted-size {
+  color: #f57c00;
+  font-weight: 500;
+}
+
+.color-orange {
+  color: orange;
+}

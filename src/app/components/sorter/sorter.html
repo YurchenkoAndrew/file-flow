@@ -1,0 +1,65 @@
+<div class="app-page-container">
+
+    <mat-card class="app-header-card mat-elevation-z1" appearance="outlined">
+        <mat-card-header>
+            <mat-card-title>
+                <mat-icon color="primary">move_to_inbox</mat-icon>
+                Умный сортировщик файлов
+            </mat-card-title>
+            <mat-card-subtitle>Наведите порядок в своих загрузках за пару кликов</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+            <!-- Выбор папки-источника -->
+            <div class="path-row" style="margin-top: 16px;">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Папка-источник (например, Загрузки)</mat-label>
+                    <input matInput [value]="sourcePath()" placeholder="Выберите папку..." readonly>
+                    <button mat-icon-button matSuffix (click)="selectSource()" title="Выбрать папку">
+                        <mat-icon>folder_open</mat-icon>
+                    </button>
+                </mat-form-field>
+            </div>
+
+            <!-- Выбор папки-назначения -->
+            <div class="path-row">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Папка назначения</mat-label>
+                    <input matInput [value]="destinationPath()" placeholder="Выберите папку..." readonly>
+                    <button mat-icon-button matSuffix (click)="selectDestination()" title="Выбрать папку">
+                        <mat-icon>create_new_folder</mat-icon>
+                    </button>
+                </mat-form-field>
+            </div>
+
+            <!-- Режим работы (Копировать / Перенести) -->
+            <div class="mode-selection">
+                <label class="label-title">Режим работы:</label>
+                <mat-radio-group [(ngModel)]="operationMode">
+                    <mat-radio-button value="copy">Копировать (оригиналы останутся на месте)</mat-radio-button>
+                    <mat-radio-button value="move">Перенести (удалить из источника)</mat-radio-button>
+                </mat-radio-group>
+            </div>
+
+            <!-- Прогресс выполнения -->
+            @if (isProcessing()) {
+                <div class="progress-section">
+                    <p class="status-text">{{ statusMessage() }}</p>
+                    <mat-progress-bar mode="determinate" [value]="progressValue()"></mat-progress-bar>
+                </div>
+            }
+        </mat-card-content>
+
+        <mat-card-actions class="actions-footer">
+            <button
+                    mat-raised-button
+                    color="primary"
+                    [disabled]="!sourcePath() || !destinationPath() || isProcessing()"
+                    (click)="startSorting()">
+                <mat-icon>play_arrow</mat-icon>
+                Запустить сортировку
+            </button>
+        </mat-card-actions>
+    </mat-card>
+
+</div>

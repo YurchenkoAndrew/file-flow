@@ -1,0 +1,23 @@
+.mode-selection {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .label-title {
+        font-size: 14px;
+    }
+
+    mat-radio-button {
+        margin-right: 20px;
+    }
+}
+
+.progress-section {
+    margin: 16px 0 25px 0;
+
+    .status-text {
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+}

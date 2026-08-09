@@ -1,0 +1,40 @@
+<div class="main-container">
+    <mat-card class="dashboard-card">
+        <mat-card-header>
+            <mat-card-title>
+                <mat-icon color="primary">info</mat-icon>
+                О программе File Flow
+            </mat-card-title>
+            <mat-card-subtitle>Высокопроизводительный файловый менеджер</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content class="about-content">
+            <div class="info-section">
+                <h3>О проекте</h3>
+                <p>
+                    <strong>File Flow</strong> — это современная десктопная утилита, созданная для быстрой и интеллектуальной сортировки хаотичных архивов, папок «Загрузки» и медиафайлов. Программа автоматически классифицирует файлы по категориям и раскладывает их по структурированным каталогам.
+                </p>
+            </div>
+
+            <div class="info-section">
+                <h3>Технологический стек</h3>
+                <ul>
+                    <li><strong>Бэкенд (Ядро):</strong> Rust (обеспечивает максимальную скорость работы с диском и безопасность).</li>
+                    <li><strong>Интерфейс (Frontend):</strong> Angular + Angular Material (стильный и отзывчивый UI).</li>
+                    <li><strong>Оболочка (Desktop Bridge):</strong> Tauri (легковесный нативный контейнер без раздувания памяти).</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <h3>Версия</h3>
+                <p class="version-text">File Flow v1.0.0 (Stable)</p>
+            </div>
+        </mat-card-content>
+
+        <mat-card-actions class="actions-footer">
+            <button mat-stroked-button color="primary" routerLink="/">
+                <mat-icon>arrow_back</mat-icon> На главную
+            </button>
+        </mat-card-actions>
+    </mat-card>
+</div>

@@ -1,59 +1,36 @@
-# FileFlow
+# File Flow
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.3.
+**File Flow** is a fast, cross-platform desktop application designed for deep filesystem analysis, disk cleanup, and finding duplicate files. Built with modern, high-performance technologies, it helps you easily reclaim storage space and organize your data.
 
-## Development server
+---
 
-To start a local development server, run:
+## 🚀 Tech Stack
 
+*   **Core / Backend:** [Rust](https://www.rust-lang.org/) (High-performance native filesystem operations, multi-threaded hashing)
+*   **Desktop Framework:** [Tauri 2.0](https://tauri.app/) (Secure, lightweight native wrapper)
+*   **Frontend:** [Angular](https://angular.dev/) (v22+) + [Angular Material](https://material.angular.io/) (Modern UI components)
+
+---
+
+## ✨ Features
+
+*   **Disk & Folder Scanner:** Analyze directory structures, track total file sizes, and view item counts.
+*   **Category Breakdown:** Visual statistics of your storage usage grouped by file categories (Documents, Media, Archives, etc.).
+*   **Heavy Files Analysis:** Quickly locate and inspect the largest files on your storage.
+*   **Duplicate Finder:** Multi-threaded MD5-based verification to accurately detect and group duplicate files, helping you safely clean up wasted space.
+*   **Native OS Integration:** Open files or reveal them directly highlighted in your system's file manager (Explorer / Finder / File Manager).
+*   **Dark / Light Theme:** Seamless theme support based on system preferences.
+
+---
+
+## 🛠️ Getting Started (Development)
+
+Make sure you have the following installed on your system:
+*   [Node.js](https://nodejs.org/) & npm
+*   [Rust toolchain](https://www.rust-lang.org/tools/install)
+*   [Tauri CLI Prerequisites](https://v2.tauri.app/start/prerequisites/)
+
+### 1. Clone the repository
 ```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+git clone [https://github.com/your-username/file-flow.git](https://github.com/your-username/file-flow.git)
+cd file-flow

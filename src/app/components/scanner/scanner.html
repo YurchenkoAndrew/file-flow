@@ -1,0 +1,232 @@
+<div class="app-page-container">
+
+    <!-- Верхняя панель управления -->
+    <mat-card class="scanner-header-card mat-elevation-z1" appearance="outlined">
+        <mat-card-header>
+            <mat-card-title>
+                <mat-icon color="primary">folder_search</mat-icon>
+                Сканирование диска и анализ файлов
+            </mat-card-title>
+            <mat-card-subtitle>Выберите целевую папку и запустите анализ файловой системы</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+            <!-- Выбор папки для сканирования -->
+            <div class="path-row scanner-path-row">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Папка для сканирования</mat-label>
+                    <input matInput [value]="selectedPath()" placeholder="Выберите папку..." readonly>
+                    <button mat-icon-button matSuffix (click)="selectFolder()" [disabled]="isLoading()"
+                            title="Выбрать папку">
+                        <mat-icon>folder_open</mat-icon>
+                    </button>
+                </mat-form-field>
+            </div>
+
+            <!-- Блок прогресса сканирования (появляется при загрузке) -->
+            @if (isLoading()) {
+                <div class="progress-section">
+                    <div class="status-row-text scanner-progress-text">
+                        <span>Анализируем файловую систему, ищем дубликаты...</span>
+                        <span>Идет сканирование</span>
+                    </div>
+                    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                </div>
+            }
+        </mat-card-content>
+
+        <!-- Кнопка просто блокируется на время сканирования -->
+        <mat-card-actions class="actions-footer">
+            <button
+                    mat-raised-button
+                    color="primary"
+                    [disabled]="!selectedPath() || isLoading()"
+                    (click)="startScan(selectedPath())">
+                <mat-icon>play_arrow</mat-icon>
+                Начать сканирование
+            </button>
+        </mat-card-actions>
+    </mat-card>
+
+    <!-- Ошибка, если возникла -->
+    @if (errorMessage()) {
+        <div class="error-banner">{{ errorMessage() }}</div>
+    }
+
+    <!-- Основной контент (когда результаты получены) -->
+    @if (scanResult() && !isLoading()) {
+
+        <!-- Навигация через Angular Material Tab Group -->
+        <mat-tab-group mat-align-tabs="start" animationDuration="0ms">
+
+            <!-- Вкладка 1: Обзор и категории -->
+            <mat-tab>
+                <!-- Шаблон метки вкладки с иконкой -->
+                <ng-template mat-tab-label>
+                    <mat-icon style="margin-right: 8px;">category</mat-icon>
+                    Обзор и категории
+                </ng-template>
+                <div class="dashboard-grid tab-content-wrapper">
+
+                    <!-- Карточка 1: Общая сводка -->
+                    <mat-card class="card summary-card" appearance="outlined">
+                        <mat-card-header>
+                            <mat-card-title>Общая статистика</mat-card-title>
+                        </mat-card-header>
+                        <mat-card-content>
+                            <div class="stats-row">
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ formatBytes(scanResult()!.total_size) }}</span>
+                                    <span class="stat-label">Занято места</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ scanResult()!.total_files_count }}</span>
+                                    <span class="stat-label">Всего файлов</span>
+                                </div>
+                                <div class="stat-item warning">
+                                    <span class="stat-value">{{ formatBytes(scanResult()!.duplicates_estimated_size) }}</span>
+                                    <span class="stat-label">Дубликаты (оценка)</span>
+                                </div>
+                            </div>
+                        </mat-card-content>
+                    </mat-card>
+
+                    <!-- Карточка 2: Распределение по категориям -->
+                    <mat-card class="card full-width-card" appearance="outlined">
+                        <mat-card-header>
+                            <mat-card-title>Категории файлов</mat-card-title>
+                        </mat-card-header>
+                        <mat-card-content>
+                            <div class="app-scroll-container categories-scroll-container">
+                                <div class="categories-list categories-list-padded">
+                                    @for (stat of scanResult()!.category_stats; track stat.category) {
+                                        <div class="category-row">
+                                            <div class="cat-info">
+                                                <span class="cat-name">{{ categoryNames[stat.category] || stat.category }}</span>
+                                                <span class="cat-meta">{{ stat.files_count }}
+                                                    файлов • {{ formatBytes(stat.total_size) }}</span>
+                                            </div>
+                                            <div class="progress-bar-bg">
+                                                <div class="progress-bar-fill" [style.width.%]="stat.percentage"></div>
+                                            </div>
+                                            <span class="cat-percent">{{ stat.percentage.toFixed(1) }}%</span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </mat-card-content>
+                    </mat-card>
+
+                </div>
+            </mat-tab>
+
+            <!-- Вкладка 2: Тяжелые файлы -->
+            <mat-tab>
+                <!-- Шаблон метки вкладки с иконкой -->
+                <ng-template mat-tab-label>
+                    <mat-icon style="margin-right: 8px;">forklift</mat-icon>
+                    Тяжелые файлы ({{ scanResult()!.largest_files.length }})
+                </ng-template>
+
+                <!-- Содержимое вкладки -->
+                <div class="tab-content-wrapper">
+                    <mat-card class="card full-width-card" appearance="outlined">
+                        <mat-card-header>
+                            <mat-card-title>Самые большие файлы на диске</mat-card-title>
+                        </mat-card-header>
+                        <mat-card-content>
+                            @if (scanResult()!.largest_files.length > 0) {
+                                <div class="app-scroll-container">
+                                    <ul class="app-file-list">
+                                        @for (file of scanResult()!.largest_files; track file.path) {
+                                            <li class="app-file-item">
+                                                <div class="app-file-details">
+                                                    <span class="app-file-name">{{ file.name }}</span>
+                                                    <span class="app-file-path">{{ file.path }}</span>
+                                                </div>
+                                                <div class="app-file-meta-right">
+                                                    <span class="file-badge">{{ categoryNames[file.category] || file.category }}</span>
+                                                    <span class="file-size">{{ formatBytes(file.size) }}</span>
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            } @else {
+                                <p class="empty-text">Тяжелых файлов не найдено</p>
+                            }
+                        </mat-card-content>
+                    </mat-card>
+                </div>
+            </mat-tab>
+
+            <!-- Вкладка 3: Дубликаты -->
+            <mat-tab>
+                <!-- Шаблон метки вкладки с иконкой -->
+                <ng-template mat-tab-label>
+                    <mat-icon style="margin-right: 8px;">file_copy</mat-icon>
+                    Дубликаты ({{ getTotalDuplicatesCount() }})
+                </ng-template>
+                <div class="tab-content-wrapper">
+                    <mat-card class="card full-width-card" appearance="outlined">
+                        <mat-card-header>
+                            <mat-card-title>Поиск и очистка дубликатов</mat-card-title>
+                        </mat-card-header>
+                        <mat-card-content>
+                            @if (scanResult()!.duplicate_groups.length > 0) {
+                                <!-- Сводка по дубликатам сверху -->
+                                <div class="duplicates-summary-banner">
+                                    <div>
+                                        <strong>Всего групп
+                                            дубликатов:</strong> {{ scanResult()!.duplicate_groups.length }} &nbsp;|&nbsp;
+                                        <strong>Всего дубликатов:</strong> {{ getTotalDuplicatesCount() }}
+                                    </div>
+                                    <div>
+                                        <strong>Впустую занято места:</strong> <span
+                                            class="duplicates-highlight-size">{{ formatBytes(scanResult()!.duplicates_estimated_size) }}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Унифицированный контейнер прокрутки для групп -->
+                                <div class="app-scroll-container">
+                                    @for (group of scanResult()!.duplicate_groups; track group.size + '_' + $index) {
+                                        <div class="app-group-card">
+                                            <div class="app-group-header">
+                                                <div class="app-group-header-category">
+                                                    <mat-icon class="color-orange">folder</mat-icon> Категория: <strong
+                                                        class="app-category-highlight">{{ categoryNames[group.files[0]?.category || 'Other'] || group.files[0]?.category }}</strong>
+                                                    &nbsp;|&nbsp; Дубликатов в группе:
+                                                    <strong>{{ group.files.length - 1 }}</strong>
+                                                </div>
+                                                <div>
+                                                    Впустую занято: <span
+                                                        class="app-group-wasted-size">{{ formatBytes(group.size * (group.files.length - 1)) }}</span>
+                                                    (файл: {{ formatBytes(group.size) }})
+                                                </div>
+                                            </div>
+
+                                            <ul class="app-file-list">
+                                                @for (file of group.files; track file.path) {
+                                                    <li class="app-file-item">
+                                                        <div class="app-file-details">
+                                                            <span class="app-file-name">{{ file.name }}</span>
+                                                            <span class="app-file-path">{{ file.path }}</span>
+                                                        </div>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
+                                </div>
+                            } @else {
+                                <p class="empty-text">Дубликатов не обнаружено. Отличная чистота на диске!</p>
+                            }
+                        </mat-card-content>
+                    </mat-card>
+                </div>
+            </mat-tab>
+
+        </mat-tab-group>
+
+    }
+</div>

@@ -1,0 +1,59 @@
+.sidenav-container {
+    height: 100%;
+}
+
+.sidenav {
+    width: 200px;
+}
+
+.sidenav .mat-toolbar {
+    background: inherit;
+}
+
+.mat-toolbar.mat-primary {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+/* Контейнер для блока темизации в шапке */
+.theme-control-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+    padding: 4px 4px;
+    background-color: rgba(255, 255, 255, 0.05); /* Легкий полупрозрачный фон для выделения блока */
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 10px 8px 5px 5px;
+
+    /* Мелкая надпись-заголовок сверху */
+
+    .theme-group-title {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        opacity: 0.7;
+        margin-bottom: 2px;
+        margin-right: 5px;
+        line-height: 1;
+    }
+
+    /* Строка с самим тумблером и кнопкой */
+
+    .theme-controls-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+}
+
+/* Фиксированная ширина текста тумблера, чтобы не было прыжков */
+.slide-toggle-label {
+    display: inline-block;
+    width: 75px;
+    text-align: right;
+    white-space: nowrap;
+    margin: 0 0 0 5px;
+}
