@@ -1,5 +1,7 @@
 // Подключаем стандартные стили Angular Material
 @use '@angular/material' as mat;
+@import '@material-design-icons/font/index.css';
+@import '@material-design-icons/font/outlined.css';
 
 // Включаем базовые стили Material
 @include mat.core();
@@ -11,6 +13,10 @@ $my-light-theme: mat.define-theme((
                 theme-type: light,
                 primary: mat.$azure-palette,
                 tertiary: mat.$blue-palette,
+        ),
+        typography: (
+                brand-family: 'Google Sans',
+                plain-family: 'Google Sans'
         )
 ));
 
@@ -19,25 +25,72 @@ $my-dark-theme: mat.define-theme((
                 theme-type: dark,
                 primary: mat.$cyan-palette,
                 tertiary: mat.$orange-palette,
+        ),
+        typography: (
+                brand-family: 'Google Sans',
+                plain-family: 'Google Sans'
         )
 ));
 
 // Применяем светлую тему по умолчанию для всего приложения
 html {
+  @include mat.core-theme($my-light-theme); // <--- Генерирует --mat-sys-primary для светлой темы
   @include mat.all-component-themes($my-light-theme);
   color-scheme: light;
+  // Достаем primary программно из светлой темы
+  --app-primary-color: #{mat.get-theme-color($my-light-theme, primary)};
 }
 
 // Если на body висит класс 'dark-theme', переключаем переменные на темную палитру
 body.dark-theme {
+  @include mat.core-theme($my-dark-theme); // <--- Генерирует --mat-sys-primary для темной темы
   @include mat.all-component-themes($my-dark-theme);
   color-scheme: dark;
+  // Достаем primary программно из темной темы
+  --app-primary-color: #{mat.get-theme-color($my-dark-theme, primary)};
 }
+
+/* ==========================================================================
+   ПОДКЛЮЧЕНИЕ ЛОКАЛЬНОГО ШРИФТА (Google Sans)
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('./assets/fonts/google-sans/GoogleSans-Regular.ttf') format('truetype');
+  font-weight: 400; /* Обычный */
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('./assets/fonts/google-sans/GoogleSans-Medium.ttf') format('truetype');
+  font-weight: 500; /* Полужирный */
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Google Sans';
+  src: url('./assets/fonts/google-sans/GoogleSans-Bold.ttf') format('truetype');
+  font-weight: 700; /* Жирный */
+  font-style: normal;
+  font-display: swap;
+}
+
+//@font-face {
+//  font-family: 'Hachi Maru Pop';
+//  src: url('./assets/fonts/hachi-maru-pop/HachiMaruPop-Regular.ttf') format('truetype');
+//  font-weight: 400; /* Regular */
+//  font-style: normal;
+//  font-display: swap;
+//}
 
 /* Общие базовые стили приложения */
 body {
   margin: 0;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  /* Указываем Hachi Maru Pop первым в списке */
+  font-family: 'Google Sans', "Helvetica Neue", sans-serif;
   // Плавный переход цветов при переключении тем
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -58,7 +111,7 @@ input, textarea {
 
 .app-page-container {
   padding: 24px;
-  max-width: 1200px;
+  //max-width: 1200px;
   margin: 0 auto;
   box-sizing: border-box;
   width: 100%;
@@ -218,7 +271,7 @@ input, textarea {
 
 /* Текстовые акценты */
 .app-category-highlight {
-  color: #1976d2;
+  color: var(--app-primary-color);
 }
 
 .app-group-wasted-size {
@@ -228,4 +281,62 @@ input, textarea {
 
 .color-orange {
   color: orange;
+}
+
+/* ==========================================================================
+   СТИЛИ ДЛЯ NGX-CHARTS (Глобальные и Светлая тема)
+   ========================================================================== */
+.ngx-charts text {
+  fill: #333333 !important; /* Цвет текста выносок в светлой теме */
+  font-size: 13px !important;
+}
+
+/* Настройки ширины и обрезки текста легенды */
+.chart-legend {
+  width: 250px !important;
+}
+
+.chart-legend .legend-label-text {
+  color: #333333 !important; /* Текст легенды в светлой теме */
+  max-width: 100% !important;
+  width: 100% !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.chart-legend .legend-labels {
+  width: 100% !important;
+}
+
+.chart-legend .legend-title-text {
+  color: #000000 !important; /* Заголовок легенды в светлой теме */
+}
+
+
+/* ==========================================================================
+   ИНТЕГРАЦИЯ В ТЕМНУЮ ТЕМУ
+   ========================================================================== */
+/* Добавляем переопределение цветов прямо в твой существующий селектор темной темы */
+.dark-theme, body.dark-theme, .mat-app-background.dark-theme {
+
+  /* ... твои текущие стили для скроллбаров и списков остаются здесь ... */
+
+  /* Перекрашиваем ngx-charts для темной темы */
+  .ngx-charts text {
+    fill: #e0e0e0 !important;
+  }
+
+  .chart-legend .legend-label-text {
+    color: #e0e0e0 !important;
+  }
+
+  .chart-legend .legend-title-text {
+    color: #ffffff !important;
+  }
+}
+.mat-mdc-card-title{
+  display: flex !important;
+  align-items: center;
+  gap: 16px;
 }

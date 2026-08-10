@@ -4,8 +4,8 @@ use std::path::Path;
 pub struct FileOpenerService;
 
 impl FileOpenerService {
-    pub fn reveal_in_folder(file_path: &str) -> Result<(), String> {
-        let path = Path::new(file_path);
+    pub fn reveal_in_folder(path: &str) -> Result<(), String> {
+        let path = Path::new(path);
         if !path.exists() {
             return Err("Файл не найден на диске".into());
         }

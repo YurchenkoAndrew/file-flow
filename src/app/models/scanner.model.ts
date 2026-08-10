@@ -9,6 +9,8 @@ export type FileCategory =
     | 'Mobile'
     | 'DiskImages'
     | 'Fonts'
+    | 'DesignProjects'
+    | 'VideoProjects'
     | 'Other';
 
 export interface FileItem {

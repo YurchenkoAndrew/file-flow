@@ -4,7 +4,7 @@
     <mat-card class="scanner-header-card mat-elevation-z1" appearance="outlined">
         <mat-card-header>
             <mat-card-title>
-                <mat-icon color="primary">folder_search</mat-icon>
+                <mat-icon color="primary">pageview</mat-icon>
                 Сканирование диска и анализ файлов
             </mat-card-title>
             <mat-card-subtitle>Выберите целевую папку и запустите анализ файловой системы</mat-card-subtitle>
@@ -91,30 +91,31 @@
                         </mat-card-content>
                     </mat-card>
 
-                    <!-- Карточка 2: Распределение по категориям -->
+                    <!-- Карточка 2: Распределение по категориям (Классический пирог с выносками) -->
                     <mat-card class="card full-width-card" appearance="outlined">
                         <mat-card-header>
                             <mat-card-title>Категории файлов</mat-card-title>
                         </mat-card-header>
-                        <mat-card-content>
-                            <div class="app-scroll-container categories-scroll-container">
-                                <div class="categories-list categories-list-padded">
-                                    @for (stat of scanResult()!.category_stats; track stat.category) {
-                                        <div class="category-row">
-                                            <div class="cat-info">
-                                                <span class="cat-name">{{ categoryNames[stat.category] || stat.category }}</span>
-                                                <span class="cat-meta">{{ stat.files_count }}
-                                                    файлов • {{ formatBytes(stat.total_size) }}</span>
-                                            </div>
-                                            <div class="progress-bar-bg">
-                                                <div class="progress-bar-fill" [style.width.%]="stat.percentage"></div>
-                                            </div>
-                                            <span class="cat-percent">{{ stat.percentage.toFixed(1) }}%</span>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </mat-card-content>
+                        <div style="height: 100%; width: 100%;">
+                            <ngx-charts-pie-chart
+                                    [results]="getChartData()"
+                                    [scheme]="chartScheme()"
+                                    [gradient]="false"
+                                    [animations]="true"
+                                    [legend]="true"
+                                    legendTitle="Типы файлов"
+                                    [legendPosition]="legendPosition"
+                                    [labels]="true"
+                                    [maxLabelLength]="30"
+                                    [trimLabels]="false"
+                                    [doughnut]="false"
+                                    [explodeSlices]="false"
+                                    [arcWidth]="0.25"
+                                    [tooltipText]="tooltipFormatting"
+                                    [labelFormatting]="pieLabelFormatting"
+                            >
+                            </ngx-charts-pie-chart>
+                        </div>
                     </mat-card>
 
                 </div>
@@ -139,7 +140,7 @@
                                 <div class="app-scroll-container">
                                     <ul class="app-file-list">
                                         @for (file of scanResult()!.largest_files; track file.path) {
-                                            <li class="app-file-item">
+                                            <li class="app-file-item" (click)="showFileByPath(file.path)">
                                                 <div class="app-file-details">
                                                     <span class="app-file-name">{{ file.name }}</span>
                                                     <span class="app-file-path">{{ file.path }}</span>
@@ -193,7 +194,8 @@
                                         <div class="app-group-card">
                                             <div class="app-group-header">
                                                 <div class="app-group-header-category">
-                                                    <mat-icon class="color-orange">folder</mat-icon> Категория: <strong
+                                                    <mat-icon class="color-orange">folder</mat-icon>
+                                                    Категория: <strong
                                                         class="app-category-highlight">{{ categoryNames[group.files[0]?.category || 'Other'] || group.files[0]?.category }}</strong>
                                                     &nbsp;|&nbsp; Дубликатов в группе:
                                                     <strong>{{ group.files.length - 1 }}</strong>
@@ -207,7 +209,7 @@
 
                                             <ul class="app-file-list">
                                                 @for (file of group.files; track file.path) {
-                                                    <li class="app-file-item">
+                                                    <li class="app-file-item" (click)="showFileByPath(file.path)">
                                                         <div class="app-file-details">
                                                             <span class="app-file-name">{{ file.name }}</span>
                                                             <span class="app-file-path">{{ file.path }}</span>

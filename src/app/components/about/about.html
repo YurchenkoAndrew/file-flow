@@ -1,33 +1,57 @@
-<div class="main-container">
-    <mat-card class="dashboard-card">
+<div class="app-page-container">
+    <mat-card class="card dashboard-card" appearance="outlined">
         <mat-card-header>
             <mat-card-title>
-                <mat-icon color="primary">info</mat-icon>
+                <mat-icon class="color-primary">info</mat-icon>
                 О программе File Flow
             </mat-card-title>
-            <mat-card-subtitle>Высокопроизводительный файловый менеджер</mat-card-subtitle>
+            <mat-card-subtitle>Высокопроизводительный десктопный файловый менеджер</mat-card-subtitle>
         </mat-card-header>
 
         <mat-card-content class="about-content">
             <div class="info-section">
                 <h3>О проекте</h3>
                 <p>
-                    <strong>File Flow</strong> — это современная десктопная утилита, созданная для быстрой и интеллектуальной сортировки хаотичных архивов, папок «Загрузки» и медиафайлов. Программа автоматически классифицирует файлы по категориям и раскладывает их по структурированным каталогам.
+                    <strong>File Flow</strong> — это современная десктопная утилита, созданная для глубокого анализа файловой системы, поиска дубликатов и наведения идеального порядка на диске.
                 </p>
             </div>
 
             <div class="info-section">
                 <h3>Технологический стек</h3>
-                <ul>
-                    <li><strong>Бэкенд (Ядро):</strong> Rust (обеспечивает максимальную скорость работы с диском и безопасность).</li>
-                    <li><strong>Интерфейс (Frontend):</strong> Angular + Angular Material (стильный и отзывчивый UI).</li>
-                    <li><strong>Оболочка (Desktop Bridge):</strong> Tauri (легковесный нативный контейнер без раздувания памяти).</li>
-                </ul>
+                <mat-list>
+
+                    <mat-list-item>
+                        <mat-icon matListItemIcon class="color-primary">terminal</mat-icon>
+                        <div matListItemTitle>Ядро (Бэкенд): Rust</div>
+                        <div matListItemLine>Многопоточный поиск, высокая производительность</div>
+                    </mat-list-item>
+                    <mat-list-item>
+                        <mat-icon matListItemIcon class="color-primary">web</mat-icon>
+                        <div matListItemTitle>Интерфейс: Angular + Angular Material</div>
+                        <div matListItemLine>Современный адаптивный UI</div>
+                    </mat-list-item>
+                    <mat-list-item>
+                        <mat-icon matListItemIcon class="color-primary">desktop_windows</mat-icon>
+                        <div matListItemTitle>Платформа: Tauri</div>
+                        <div matListItemLine>Легковесная нативная оболочка</div>
+                    </mat-list-item>
+                </mat-list>
+            </div>
+
+            <div class="info-section">
+                <h3>Разработчик и контакты</h3>
+                <mat-list>
+                    <mat-list-item>
+                        <mat-icon matListItemIcon class="color-primary">person</mat-icon>
+                        <div matListItemTitle>Автор и разработчик: <strong>Андрей Юрченко</strong></div>
+                        <div matListItemLine>Почта для обратной связи: <a href="mailto:andrey@wsa.kz">andrew&#64;wsa.kz</a></div>
+                    </mat-list-item>
+                </mat-list>
             </div>
 
             <div class="info-section">
                 <h3>Версия</h3>
-                <p class="version-text">File Flow v1.0.0 (Stable)</p>
+                <p class="version-text" style="margin-left: 16px;">File Flow v0.0.5 (Beta)</p>
             </div>
         </mat-card-content>
 

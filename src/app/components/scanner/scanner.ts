@@ -1,4 +1,4 @@
-import {Component, inject, signal} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
 import {FileCategory, ScanResultSummary} from "../../models/scanner.model";
 import {open} from '@tauri-apps/plugin-dialog';
 import {MatCardModule} from "@angular/material/card";
@@ -12,6 +12,9 @@ import {MatRadioModule} from "@angular/material/radio";
 import {MatProgressBarModule} from "@angular/material/progress-bar";
 import {MatTab, MatTabGroup, MatTabLabel} from "@angular/material/tabs";
 import {ScannerService} from "../../services/scanner";
+import {SharedService} from "../../services/shared";
+import {Color, LegendPosition, NgxChartsModule} from "@swimlane/ngx-charts";
+import {Theme} from "../../services/theme";
 
 @Component({
     selector: 'app-scanner',
@@ -27,20 +30,28 @@ import {ScannerService} from "../../services/scanner";
         MatIconModule,
         MatTabGroup,
         MatTab,
-        MatTabLabel
+        MatTabLabel,
+        NgxChartsModule
     ],
     templateUrl: './scanner.html',
     styleUrl: './scanner.css',
 })
 export class Scanner {
     private scannerService = inject(ScannerService);
+    private sharedService = inject(SharedService);// 1. Инжектируем сервис тем
+    private themeService = inject(Theme);
     // Сигналы Angular для реактивного состояния
     isLoading = signal<boolean>(false);
     selectedPath = signal<string>('');
     scanResult = signal<ScanResultSummary | null>(null);
     errorMessage = signal<string | null>(null);
-    // Активная вкладка ('overview' | 'heavy' | 'duplicates')
-    // activeTab = signal<string>('overview');
+    legendPosition: LegendPosition = LegendPosition.Right;// 2. Берем сигнал напрямую из сервиса, а не создаем локальный!
+    isDarkMode = this.themeService.isDarkMode;
+
+    // Теперь computed будет реактивно пересчитываться при изменении темы
+    chartScheme = computed<string | Color>(() => {
+        return this.isDarkMode() ? 'vivid' : 'cool';
+    });
 
     // Словарь для красивых названий категорий на русском
     categoryNames: Record<FileCategory, string> = {
@@ -53,8 +64,11 @@ export class Scanner {
         Software: 'Программы для ПК',
         Mobile: 'Мобильные (APK/IPA)',
         DiskImages: 'Образы дисков',
+        DesignProjects: 'Дизайн (PSD/AI)',
+        VideoProjects: 'Видеопроекты (Pr/Ae)',
         Fonts: 'Шрифты',
-        Other: 'Другое'
+
+        Other: 'Прочее'
     };
 
     // Метод выбора папки через нативный диалог Tauri
@@ -74,7 +88,7 @@ export class Scanner {
         }
     }
 
-    // И сам метод старта сканирования выглядит чисто:
+    // И сам метод старта сканирования:
     async startScan(path: string) {
         this.isLoading.set(true);
         this.errorMessage.set(null);
@@ -98,6 +112,55 @@ export class Scanner {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
+    // Нативная функция форматирования для выносок (стрелочек) графика
+    pieLabelFormatting = (label: string): string => {
+        // Получаем наши актуальные данные
+        const chartData = this.getChartData();
+        // Ищем текущую категорию по имени, чтобы достать её размер
+        const item = chartData.find(d => d.name === label);
+
+        if (item) {
+            // Достаем настоящий размер (используем extra.realValue, если делали фикс для мелких файлов)
+            const realSize = item.extra?.realValue ?? item.value;
+            // Возвращаем красивую строку: "Категория (Размер)"
+            return `${label} (${this.formatBytes(realSize)})`;
+        }
+
+        return label; // Фоллбэк, если ничего не нашлось
+    }
+
+    // Форматирование значения для тултипа графиков
+    tooltipFormatting = (data: any): string => {
+        const name = data.data?.name || data.data?.label || '';
+
+        // Пытаемся взять честный размер из extra.realValue. Если его вдруг нет, берем стандартный value.
+        const value = data.data?.extra?.realValue ?? data.value ?? data.data?.value ?? 0;
+
+        return `${name}: ${this.formatBytes(value)}`;
+    }
+
+    // Преобразуем данные категорий для ngx-charts
+    getChartData() {
+        const res = this.scanResult();
+        if (!res || !res.category_stats || res.total_size === 0) return [];
+
+        const minVisualSize = res.total_size * 0.005;
+
+        return res.category_stats
+            .filter(stat => stat.files_count > 0 && stat.total_size > 0)
+            .map(stat => {
+                const baseName = this.categoryNames[stat.category] || stat.category;
+                const formattedSize = this.formatBytes(stat.total_size);
+
+                return {
+                    // Теперь имя в легенде сразу будет содержать размер: "Видео (21.31 ГБ)"
+                    name: `${baseName} (${formattedSize})`,
+                    value: stat.total_size < minVisualSize ? minVisualSize : stat.total_size,
+                    extra: {realValue: stat.total_size}
+                };
+            });
+    }
+
     // Считает общее количество файлов-дубликатов (все лишние копии)
     getTotalDuplicatesCount(): number {
         const res = this.scanResult();
@@ -107,5 +170,16 @@ export class Scanner {
             // В каждой группе первый файл — оригинал, остальные (group.files.length - 1) — дубликаты
             return acc + Math.max(0, group.files.length - 1);
         }, 0);
+    }
+
+    // Открывает просмотр файла в проводнике по пути его расположения
+    async showFileByPath(path: string): Promise<void> {
+        this.errorMessage.set(null);
+        try {
+            await this.sharedService.showFileByPath(path);
+            console.log(path);
+        } catch (error) {
+            this.errorMessage.set('Ошибка при открытии папки с файлом: ' + error);
+        }
     }
 }

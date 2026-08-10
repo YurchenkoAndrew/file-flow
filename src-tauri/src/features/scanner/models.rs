@@ -50,6 +50,8 @@ pub enum FileCategory {
     Mobile,
     DiskImages,
     Fonts,
+    DesignProjects, // Дизайн-исходники (PSD, AI, CDR и т.д.)
+    VideoProjects,  // Проекты видеомонтажа (Premiere, After Effects, Vegas)
     Other,
 }
 
@@ -57,12 +59,20 @@ impl FileCategory {
     pub fn from_extension(ext: &str) -> Self {
         let ext = ext.to_lowercase();
         match ext.as_str() {
-            // Изображения
-            "jpg" | "jpeg" | "png" | "gif" | "webp" | "svg" | "heic" | "heif" | "bmp" | "tiff"
-            | "ico" => FileCategory::Image,
+            // Изображения и графические исходники
+            "jpg" | "jpeg" | "png" | "gif" | "webp" | "svg" | "heic" | "heif" | "bmp" | "tiff" | "tif"
+            | "ico" | "cur" | "tga" | "xcf" | "pdn" | "raw" | "cr2"
+            | "cr3" | "nef" | "arw" | "dng" | "orf" | "rw2" | "avif" => FileCategory::Image,
+
+            // Дизайн-исходники (Photoshop, Illustrator, Corel)
+            "psd" | "psb" | "ai" | "cdr" | "blend" | "fig" => FileCategory::DesignProjects,
+
+            // Проекты видеомонтажа и анимации (Premiere, After Effects, Vegas, DaVinci)
+            "prproj" | "aep" | "aepx" | "veg" | "drp" | "sesx" => FileCategory::VideoProjects,
 
             // Видео
-            "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "m4v" => FileCategory::Video,
+            "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "m4v" | "3gp" | "3g2"
+            | "m2ts" | "mts" | "vob" | "ogv" | "f4v" | "mxf" | "rm" | "rmvb" | "asf" | "divx" => FileCategory::Video,
 
             // Документы
             "pdf" | "doc" | "docx" | "txt" | "rtf" | "xls" | "xlsx" | "ppt" | "pptx" | "odt"

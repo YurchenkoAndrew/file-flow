@@ -4,6 +4,7 @@ import {MatCardModule} from "@angular/material/card";
 import {MatButtonModule} from "@angular/material/button";
 import {MatIconModule} from "@angular/material/icon";
 import {RouterLink} from "@angular/router";
+import {MatList, MatListItem} from "@angular/material/list";
 
 @Component({
   selector: 'app-about',
@@ -12,7 +13,9 @@ import {RouterLink} from "@angular/router";
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    RouterLink
+    RouterLink,
+    MatList,
+    MatListItem
   ],
   templateUrl: './about.html',
   styleUrl: './about.css',

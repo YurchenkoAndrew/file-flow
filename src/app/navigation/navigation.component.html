@@ -8,22 +8,43 @@
         [attr.role]="isHandset ? 'dialog' : 'navigation'"
         [mode]="isHandset ? 'over' : 'side'"
         [opened]="!isHandset"
+        autoFocus="false"
     >
-        <mat-toolbar>Menu</mat-toolbar>
+        <mat-toolbar style="justify-content: center">Навигация</mat-toolbar>
         <mat-nav-list>
-            <a mat-list-item routerLink="scanner" routerLinkActive="active-link"
-               [routerLinkActiveOptions]="{ exact: true }">
+            <!-- 1. Сканер -->
+            <mat-list-item
+                    routerLink="/scanner"
+                    routerLinkActive
+                    #rlaScanner="routerLinkActive"
+                    [activated]="rlaScanner.isActive"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    (click)="isHandset ? drawer.close() : null">
                 <mat-icon matListItemIcon>radar</mat-icon>
                 <span matListItemTitle>Сканер</span>
-            </a>
-            <a mat-list-item routerLink="sorter" routerLinkActive="active-link">
+            </mat-list-item>
+
+            <!-- 2. Сортировщик -->
+            <mat-list-item
+                    routerLink="/sorter"
+                    routerLinkActive
+                    #rlaSorter="routerLinkActive"
+                    [activated]="rlaSorter.isActive"
+                    (click)="isHandset ? drawer.close() : null">
                 <mat-icon matListItemIcon>move_to_inbox</mat-icon>
                 <span matListItemTitle>Сортировщик</span>
-            </a>
-            <a mat-list-item routerLink="/about" routerLinkActive="active-link">
+            </mat-list-item>
+
+            <!-- 3. О программе -->
+            <mat-list-item
+                    routerLink="/about"
+                    routerLinkActive
+                    #rlaAbout="routerLinkActive"
+                    [activated]="rlaAbout.isActive"
+                    (click)="isHandset ? drawer.close() : null">
                 <mat-icon matListItemIcon>info</mat-icon>
                 <span matListItemTitle>О программе</span>
-            </a>
+            </mat-list-item>
         </mat-nav-list>
     </mat-sidenav>
     <mat-sidenav-content>
