@@ -161,72 +161,98 @@
                 </div>
             </mat-tab>
 
-            <!-- Вкладка 3: Дубликаты -->
-            <mat-tab>
-                <!-- Шаблон метки вкладки с иконкой -->
-                <ng-template mat-tab-label>
-                    <mat-icon style="margin-right: 8px;">file_copy</mat-icon>
-                    Дубликаты ({{ getTotalDuplicatesCount() }})
-                </ng-template>
-                <div class="tab-content-wrapper">
-                    <mat-card class="card full-width-card" appearance="outlined">
+        <!-- Вкладка 3: Дубликаты -->
+        <mat-tab>
+            <ng-template mat-tab-label>
+                <mat-icon style="margin-right: 8px;">file_copy</mat-icon>
+                Дубликаты ({{ getTotalDuplicatesCount() }})
+            </ng-template>
+            <div class="tab-content-wrapper">
+
+                @if (scanResult()!.duplicate_groups.length > 0) {
+                    <!-- Карточка управления дубликатами (похожа на общую статистику) -->
+                    <mat-card class="card summary-card" appearance="outlined" style="margin-bottom: 16px;">
                         <mat-card-header>
-                            <mat-card-title>Поиск и очистка дубликатов</mat-card-title>
+                            <mat-card-title>Управление дубликатами</mat-card-title>
+                            <mat-card-subtitle>Автоматическая очистка лишних копий</mat-card-subtitle>
                         </mat-card-header>
                         <mat-card-content>
-                            @if (scanResult()!.duplicate_groups.length > 0) {
-                                <!-- Сводка по дубликатам сверху -->
-                                <div class="duplicates-summary-banner">
-                                    <div>
-                                        <strong>Всего групп
-                                            дубликатов:</strong> {{ scanResult()!.duplicate_groups.length }} &nbsp;|&nbsp;
-                                        <strong>Всего дубликатов:</strong> {{ getTotalDuplicatesCount() }}
-                                    </div>
-                                    <div>
-                                        <strong>Впустую занято места:</strong> <span
-                                            class="duplicates-highlight-size">{{ formatBytes(scanResult()!.duplicates_estimated_size) }}</span>
-                                    </div>
+                            <div class="stats-row" style="align-items: center;">
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ scanResult()!.duplicate_groups.length }}</span>
+                                    <span class="stat-label">Групп найдено</span>
                                 </div>
-
-                                <!-- Унифицированный контейнер прокрутки для групп -->
-                                <div class="app-scroll-container">
-                                    @for (group of scanResult()!.duplicate_groups; track group.size + '_' + $index) {
-                                        <div class="app-group-card">
-                                            <div class="app-group-header">
-                                                <div class="app-group-header-category">
-                                                    <mat-icon class="color-orange">folder</mat-icon>
-                                                    Категория: <strong
-                                                        class="app-category-highlight">{{ categoryNames[group.files[0]?.category || 'Other'] || group.files[0]?.category }}</strong>
-                                                    &nbsp;|&nbsp; Дубликатов в группе:
-                                                    <strong>{{ group.files.length - 1 }}</strong>
-                                                </div>
-                                                <div>
-                                                    Впустую занято: <span
-                                                        class="app-group-wasted-size">{{ formatBytes(group.size * (group.files.length - 1)) }}</span>
-                                                    (файл: {{ formatBytes(group.size) }})
-                                                </div>
-                                            </div>
-
-                                            <ul class="app-file-list">
-                                                @for (file of group.files; track file.path) {
-                                                    <li class="app-file-item" (click)="showFileByPath(file.path)">
-                                                        <div class="app-file-details">
-                                                            <span class="app-file-name">{{ file.name }}</span>
-                                                            <span class="app-file-path">{{ file.path }}</span>
-                                                        </div>
-                                                    </li>
-                                                }
-                                            </ul>
-                                        </div>
-                                    }
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ getTotalDuplicatesCount() }}</span>
+                                    <span class="stat-label">Лишних файлов</span>
                                 </div>
-                            } @else {
-                                <p class="empty-text">Дубликатов не обнаружено. Отличная чистота на диске!</p>
-                            }
+                                <div class="stat-item warning">
+                                    <span class="stat-value">{{ formatBytes(scanResult()!.duplicates_estimated_size) }}</span>
+                                    <span class="stat-label">Можно освободить</span>
+                                </div>
+                            </div>
+                            <div style="margin-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                    <span style="font-size: 13px; color: gray; max-width: 500px;">
+                                        ℹ️ При удалении система автоматически сохранит самый первый (самый старый) файл в каждой группе как оригинал, а остальные дубликаты будут удалены.
+                                    </span>
+                                <button
+                                        mat-raised-button
+                                        color="warn"
+                                        [disabled]="isDeletingDuplicates()"
+                                        (click)="removeDuplicates()">
+                                    <mat-icon>delete_sweep</mat-icon>
+                                    {{ isDeletingDuplicates() ? 'Удаление...' : 'Удалить дубликаты' }}
+                                </button>
+                            </div>
                         </mat-card-content>
                     </mat-card>
-                </div>
-            </mat-tab>
+                }
+
+                <mat-card class="card full-width-card" appearance="outlined">
+                    <mat-card-header>
+                        <mat-card-title>Список найденных дубликатов</mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content>
+                        @if (scanResult()!.duplicate_groups.length > 0) {
+                            <!-- Унифицированный контейнер прокрутки для групп -->
+                            <div class="app-scroll-container">
+                                @for (group of scanResult()!.duplicate_groups; track group.size + '_' + $index) {
+                                    <div class="app-group-card">
+                                        <div class="app-group-header">
+                                            <div class="app-group-header-category">
+                                                <mat-icon class="color-orange">folder</mat-icon>
+                                                Категория: <strong
+                                                    class="app-category-highlight">{{ categoryNames[group.files[0]?.category || 'Other'] || group.files[0]?.category }}</strong>
+                                                &nbsp;|&nbsp; Дубликатов в группе:
+                                                <strong>{{ group.files.length - 1 }}</strong>
+                                            </div>
+                                            <div>
+                                                Впустую занято: <span
+                                                    class="app-group-wasted-size">{{ formatBytes(group.size * (group.files.length - 1)) }}</span>
+                                                (файл: {{ formatBytes(group.size) }})
+                                            </div>
+                                        </div>
+
+                                        <ul class="app-file-list">
+                                            @for (file of group.files; track file.path) {
+                                                <li class="app-file-item" (click)="showFileByPath(file.path)">
+                                                    <div class="app-file-details">
+                                                        <span class="app-file-name">{{ file.name }}</span>
+                                                        <span class="app-file-path">{{ file.path }}</span>
+                                                    </div>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                }
+                            </div>
+                        } @else {
+                            <p class="empty-text">Дубликатов не обнаружено. Отличная чистота на диске!</p>
+                        }
+                    </mat-card-content>
+                </mat-card>
+            </div>
+        </mat-tab>
 
         </mat-tab-group>
 

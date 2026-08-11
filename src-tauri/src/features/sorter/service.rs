@@ -105,8 +105,8 @@ impl FileSorter {
             }
         }
 
-        // 4. Обновляем статус сессии в базе данных на 'optimized'
-        Self::mark_session_as_optimized(pool, &options.source_path)
+        // 4. Обновляем флаг оптимизации сессии в базе данных
+        Self::mark_session_as_optimized(pool, options.session_id, &options.source_path)
             .await
             .ok();
 
@@ -191,18 +191,39 @@ impl FileSorter {
         }
     }
 
-    /// Обновление статуса в таблице scan_sessions на 'optimized' по пути папки
-    async fn mark_session_as_optimized(pool: &SqlitePool, path: &str) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            r#"
-            UPDATE scan_sessions
-            SET status = 'optimized'
-            WHERE path = ? AND status = 'scanned'
-            "#,
-        )
-        .bind(path)
-        .execute(pool)
-        .await?;
+    /// Обновление флага оптимизации в таблице scan_sessions
+    async fn mark_session_as_optimized(
+        pool: &SqlitePool,
+        session_id: Option<i64>,
+        path: &str
+    ) -> Result<(), sqlx::Error> {
+        if let Some(id) = session_id {
+            // Если пришел точный ID сессии — обновляем конкретную запись
+            sqlx::query(
+                r#"
+                UPDATE scan_sessions
+                SET is_optimized = 1
+                WHERE id = ?
+                "#,
+            )
+                .bind(id)
+                .execute(pool)
+                .await?;
+        } else {
+            // Резервный вариант по пути, если ID не передали
+            sqlx::query(
+                r#"
+                UPDATE scan_sessions
+                SET is_optimized = 1
+                WHERE path = ? AND is_optimized = 0
+                ORDER BY created_at DESC
+                LIMIT 1
+                "#,
+            )
+                .bind(path)
+                .execute(pool)
+                .await?;
+        }
 
         Ok(())
     }

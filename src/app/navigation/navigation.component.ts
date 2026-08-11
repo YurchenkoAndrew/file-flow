@@ -8,7 +8,7 @@ import {MatListModule} from '@angular/material/list';
 import {MatIconModule} from '@angular/material/icon';
 import {map} from 'rxjs/operators';
 import {RouterLink, RouterLinkActive, RouterOutlet} from "@angular/router";
-import {Theme} from "../services/theme";
+import {ThemeService} from "../services/theme.service";
 import {MatTooltip} from "@angular/material/tooltip";
 import {MatSlideToggle} from "@angular/material/slide-toggle";
 
@@ -21,7 +21,7 @@ import {MatSlideToggle} from "@angular/material/slide-toggle";
 export class NavigationComponent {
     private readonly breakpointObserver = inject(BreakpointObserver);
     // Внедряем сервис тем
-    public readonly themeService = inject(Theme);
+    public readonly themeService = inject(ThemeService);
 
     readonly isHandset = toSignal(
         this.breakpointObserver.observe(Breakpoints.Handset).pipe(map((result) => result.matches)),

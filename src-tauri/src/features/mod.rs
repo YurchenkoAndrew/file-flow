@@ -1,2 +1,3 @@
+pub mod duplicates;
 pub mod scanner;
 pub mod sorter;

@@ -19,7 +19,7 @@
 *   **Heavy Files Analysis:** Quickly locate and inspect the largest files on your storage.
 *   **Duplicate Finder:** Multi-threaded MD5-based verification to accurately detect and group duplicate files, helping you safely clean up wasted space.
 *   **Native OS Integration:** Open files or reveal them directly highlighted in your system's file manager (Explorer / Finder / File Manager).
-*   **Dark / Light Theme:** Seamless theme support based on system preferences.
+*   **Dark / Light ThemeService:** Seamless theme support based on system preferences.
 
 ---
 

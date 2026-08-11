@@ -7,6 +7,7 @@ pub mod shared;
 use crate::features::scanner::commands::start_scan;
 use crate::features::sorter::commands::start_sorting;
 use crate::shared::commands::reveal_file_in_folder;
+use crate::features::duplicates::commands::remove_duplicates;
 use database::DatabaseManager;
 use tauri::Manager;
 
@@ -39,7 +40,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             start_scan,
             reveal_file_in_folder,
-            start_sorting
+            start_sorting,
+            remove_duplicates
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

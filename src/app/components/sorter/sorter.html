@@ -43,9 +43,9 @@
 
             <!-- Прогресс выполнения -->
             @if (isProcessing()) {
-                <div class="progress-section">
+                <div class="progress-section" style="margin-top: 16px;">
                     <p class="status-text">{{ statusMessage() }}</p>
-                    <mat-progress-bar mode="determinate" [value]="progressValue()"></mat-progress-bar>
+                    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
                 </div>
             }
         </mat-card-content>

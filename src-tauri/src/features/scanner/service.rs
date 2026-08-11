@@ -1,9 +1,11 @@
+use crate::features::scanner::models::{
+    CategoryStat, DuplicateGroup, FileCategory, FileItem, ScanResultSummary,
+};
+use rayon::prelude::*;
+use sqlx::SqlitePool;
 use std::fs::File;
 use std::io::Read;
-use crate::features::scanner::models::{CategoryStat, DuplicateGroup, FileCategory, FileItem, ScanResultSummary};
-use sqlx::SqlitePool;
 use std::path::Path;
-use rayon::prelude::*; // Подключаем параллельные итераторы Rayon
 use walkdir::WalkDir;
 
 pub struct FileScanner;
@@ -52,7 +54,6 @@ impl FileScanner {
 
                 let category = FileCategory::from_extension(&extension);
 
-                // Накапливаем статистику по категории
                 let entry_stat = category_map.entry(category.clone()).or_insert((0, 0));
                 entry_stat.0 += size;
                 entry_stat.1 += 1;
@@ -69,7 +70,6 @@ impl FileScanner {
             }
         }
 
-        // Формируем статистику по категориям с процентами
         let mut category_stats = Vec::new();
         for (cat, (size, count)) in category_map {
             let percentage = if total_size > 0 {
@@ -86,11 +86,8 @@ impl FileScanner {
             });
         }
 
-        // Сортируем категории по размеру (от больших к меньшим)
         category_stats.sort_by(|a, b| b.total_size.cmp(&a.total_size));
 
-        // Находим топ тяжелых файлов (например, топ-50)
-        // Устанавливаем порог для тяжелых файлов: например, всё, что больше 100 МБ
         const MIN_HEAVY_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100 МБ
 
         let mut largest_files: Vec<FileItem> = all_files
@@ -102,26 +99,22 @@ impl FileScanner {
         largest_files.sort_by(|a, b| b.size.cmp(&a.size));
         largest_files.truncate(50);
 
-
-        // 1. Группируем файлы по размеру (проверяем все файлы больше 0 байт)
-        let mut size_map: std::collections::HashMap<u64, Vec<FileItem>> = std::collections::HashMap::new();
+        let mut size_map: std::collections::HashMap<u64, Vec<FileItem>> =
+            std::collections::HashMap::new();
         for file in &all_files {
             if file.size > 0 {
                 size_map.entry(file.size).or_default().push(file.clone());
             }
         }
 
-        // let mut duplicates_estimated_size: u64 = 0;
-        // let mut duplicate_groups: Vec<Vec<FileItem>> = Vec::new();
-
-        // 2. Параллельно обрабатываем группы файлов с одинаковым размером
         let results: Vec<(u64, Vec<DuplicateGroup>)> = size_map
             .into_par_iter()
             .filter(|(_, group)| group.len() > 1)
             .map(|(_size, group)| {
                 let mut local_dup_size: u64 = 0;
                 let mut local_groups: Vec<DuplicateGroup> = Vec::new();
-                let mut hash_map: std::collections::HashMap<String, Vec<FileItem>> = std::collections::HashMap::new();
+                let mut hash_map: std::collections::HashMap<String, Vec<FileItem>> =
+                    std::collections::HashMap::new();
 
                 for file in group {
                     if let Ok(mut file_handle) = File::open(&file.path) {
@@ -137,7 +130,9 @@ impl FileScanner {
 
                                 if file_handle.seek(SeekFrom::End(-4096)).is_ok() {
                                     let mut tail_buffer = [0u8; 4096];
-                                    if let Ok(tail_bytes) = Read::read(&mut file_handle, &mut tail_buffer[..]) {
+                                    if let Ok(tail_bytes) =
+                                        Read::read(&mut file_handle, &mut tail_buffer[..])
+                                    {
                                         context.consume(&tail_buffer[..tail_bytes]);
                                     }
                                 }
@@ -166,7 +161,6 @@ impl FileScanner {
             })
             .collect();
 
-        // Аккуратно собираем результаты со всех потоков без задвоений
         let mut duplicates_estimated_size: u64 = 0;
         let mut duplicate_groups: Vec<DuplicateGroup> = Vec::new();
 
@@ -175,18 +169,24 @@ impl FileScanner {
             duplicate_groups.extend(groups);
         }
 
-        // Сохраняем сессию в базу данных SQLite
-        Self::save_scan_to_db(
+        let duplicates_count: usize = duplicate_groups
+            .iter()
+            .map(|g| g.files.len().saturating_sub(1))
+            .sum();
+
+        // Сохраняем сессию в базу данных SQLite и получаем её session_id
+        let session_id = Self::save_scan_to_db(
             pool,
             target_path,
             total_size,
             total_files_count,
             duplicates_estimated_size,
-            &all_files,
+            duplicates_count,
         )
         .await?;
 
         Ok(ScanResultSummary {
+            session_id, // <-- Возвращаем ID сессии на фронтенд
             total_size,
             total_files_count,
             category_stats,
@@ -196,53 +196,73 @@ impl FileScanner {
         })
     }
 
-    // Вспомогательный метод для сохранения результатов в БД
+    // Вспомогательный метод для сохранения или обновления сессии в БД
     async fn save_scan_to_db(
         pool: &SqlitePool,
         path: &str,
         total_size: u64,
         total_files_count: usize,
         duplicates_size: u64,
-        files: &[FileItem],
-    ) -> Result<(), sqlx::Error> {
-        // Начинаем транзакцию
-        let mut tx = pool.begin().await?;
-
-        // Сохраняем сессию сканирования
-        let session_id: i64 = sqlx::query_scalar(
+        duplicates_count: usize,
+    ) -> Result<i64, sqlx::Error> {
+        // 1. Ищем существующую «пустышку» (сессию без очистки и сортировки) для этого пути
+        let existing_session: Option<i64> = sqlx::query_scalar(
             r#"
-            INSERT INTO scan_sessions (path, total_size, total_files_count, duplicates_size, status)
-            VALUES (?, ?, ?, ?, 'scanned')
-            RETURNING id
+            SELECT id FROM scan_sessions
+            WHERE path = ? AND is_duplicates_removed = 0 AND is_optimized = 0
+            ORDER BY created_at DESC
+            LIMIT 1
             "#,
         )
-        .bind(path)
-        .bind(total_size as i64)
-        .bind(total_files_count as i64)
-        .bind(duplicates_size as i64)
-        .fetch_one(&mut *tx)
-        .await?;
+            .bind(path)
+            .fetch_optional(pool)
+            .await?;
 
-        // Пакетное сохранение файлов (или поочередное)
-        for file in files {
-            let category_str = format!("{:?}", file.category); // Или сохраняем строковое представление
+        let session_id = if let Some(id) = existing_session {
+            // 2. Если нашли черновик — обновляем его свежими данными
             sqlx::query(
                 r#"
-                INSERT INTO file_items (session_id, path, name, extension, size, category)
-                VALUES (?, ?, ?, ?, ?, ?)
+                UPDATE scan_sessions
+                SET total_size = ?,
+                    total_files_count = ?,
+                    duplicates_size = ?,
+                    duplicates_count = ?,
+                    created_at = CURRENT_TIMESTAMP
+                WHERE id = ?
                 "#,
             )
-            .bind(session_id)
-            .bind(&file.path)
-            .bind(&file.name)
-            .bind(&file.extension)
-            .bind(file.size as i64)
-            .bind(category_str)
-            .execute(&mut *tx)
-            .await?;
-        }
+                .bind(total_size as i64)
+                .bind(total_files_count as i64)
+                .bind(duplicates_size as i64)
+                .bind(duplicates_count as i64)
+                .bind(id)
+                .execute(pool)
+                .await?;
 
-        tx.commit().await?;
-        Ok(())
+            id
+        } else {
+            // 3. Если сессии нет — создаем новую без упоминания удаленной колонки status
+            let new_id: i64 = sqlx::query_scalar(
+                r#"
+                INSERT INTO scan_sessions (
+                    path, total_size, total_files_count, duplicates_size, duplicates_count,
+                    is_scanned, is_duplicates_removed, is_optimized
+                )
+                VALUES (?, ?, ?, ?, ?, 1, 0, 0)
+                RETURNING id
+                "#,
+            )
+                .bind(path)
+                .bind(total_size as i64)
+                .bind(total_files_count as i64)
+                .bind(duplicates_size as i64)
+                .bind(duplicates_count as i64)
+                .fetch_one(pool)
+                .await?;
+
+            new_id
+        };
+
+        Ok(session_id)
     }
 }

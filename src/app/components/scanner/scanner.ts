@@ -1,4 +1,4 @@
-import {Component, computed, inject, OnInit, signal} from '@angular/core';
+import {Component, computed, inject, signal} from '@angular/core';
 import {FileCategory, ScanResultSummary} from "../../models/scanner.model";
 import {open} from '@tauri-apps/plugin-dialog';
 import {MatCardModule} from "@angular/material/card";
@@ -11,11 +11,12 @@ import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatRadioModule} from "@angular/material/radio";
 import {MatProgressBarModule} from "@angular/material/progress-bar";
 import {MatTab, MatTabGroup, MatTabLabel} from "@angular/material/tabs";
-import {ScannerService} from "../../services/scanner";
-import {SharedService} from "../../services/shared";
+import {ScannerService} from "../../services/scanner.service";
+import {SharedService} from "../../services/shared.service";
 import {Color, LegendPosition, NgxChartsModule} from "@swimlane/ngx-charts";
-import {Theme} from "../../services/theme";
+import {ThemeService} from "../../services/theme.service";
 import {StateService} from "../../services/state.service";
+import {DuplicatesService} from "../../services/duplicates.service";
 
 @Component({
     selector: 'app-scanner',
@@ -37,13 +38,15 @@ import {StateService} from "../../services/state.service";
     templateUrl: './scanner.html',
     styleUrl: './scanner.css',
 })
-export class Scanner implements OnInit {
+export class Scanner {
+    // Сигналы Angular для реактивного состояния
+    // 1. Инжектируем сервис тем
+    private themeService = inject(ThemeService);
     private scannerService = inject(ScannerService);
     private sharedService = inject(SharedService);
     private readonly sharedState = inject(StateService);
-    // 1. Инжектируем сервис тем
-    private themeService = inject(Theme);
-    // Сигналы Angular для реактивного состояния
+    private duplicatesService = inject(DuplicatesService);
+    isDeletingDuplicates = signal<boolean>(false)
     isLoading = signal<boolean>(false);
     selectedPath = signal<string>('');
     scanResult = signal<ScanResultSummary | null>(null);
@@ -56,21 +59,13 @@ export class Scanner implements OnInit {
         return this.isDarkMode() ? 'vivid' : 'cool';
     });
 
-    ngOnInit() {
-        // Если в общем состоянии уже есть сохраненный путь, подставляем его в поле
-        const savedPath = this.sharedState.lastScannedPath();
-        if (savedPath && !this.selectedPath()) {
-            this.selectedPath.set(savedPath);
-        }
-    }
-
     // Словарь для красивых названий категорий на русском
     categoryNames: Record<FileCategory, string> = {
-        Image: 'Изображения',
-        Video: 'Видео',
-        Document: 'Документы',
-        Audio: 'Аудио',
-        Archive: 'Архивы',
+        Images: 'Изображения',
+        Videos: 'Видео',
+        Documents: 'Документы',
+        Audios: 'Аудио',
+        Archives: 'Архивы',
         Code: 'Код и скрипты',
         Software: 'Программы для ПК',
         Mobile: 'Мобильные (APK/IPA)',
@@ -81,6 +76,20 @@ export class Scanner implements OnInit {
 
         Other: 'Прочее'
     };
+
+    ngOnInit() {
+        // Восстанавливаем путь в инпут, если он был сохранен
+        const savedPath = this.sharedState.activePath();
+        if (savedPath && !this.selectedPath()) {
+            this.selectedPath.set(savedPath);
+        }
+
+        // Мгновенно возвращаем прошлые результаты сканирования на экран без повторного запуска
+        const savedResult = this.sharedState.currentScanResult();
+        if (savedResult && !this.scanResult()) {
+            this.scanResult.set(savedResult);
+        }
+    }
 
     // Метод выбора папки через нативный диалог Tauri
     async selectFolder() {
@@ -93,7 +102,6 @@ export class Scanner implements OnInit {
 
             if (folderPath && typeof folderPath === 'string') {
                 this.selectedPath.set(folderPath); // Просто заполняем путь в инпут, сканирование по кнопке!
-                this.sharedState.lastScannedPath.set(folderPath); // Сохраняем в общее состояние для сортировщика
             }
         } catch (error) {
             this.errorMessage.set(`Ошибка выбора папки: ${error}`);
@@ -108,6 +116,10 @@ export class Scanner implements OnInit {
         try {
             const result = await this.scannerService.scanDirectory(path);
             this.scanResult.set(result);
+            // Сохраняем сессию и путь в глобальное состояние
+            if (result.session_id) {
+                this.sharedState.setActiveSession(result.session_id, path, result);
+            }
         } catch (error) {
             this.errorMessage.set(`Ошибка при сканировании: ${error}`);
         } finally {
@@ -192,6 +204,34 @@ export class Scanner implements OnInit {
             console.log(path);
         } catch (error) {
             this.errorMessage.set('Ошибка при открытии папки с файлом: ' + error);
+        }
+    }
+
+    // Метод удаления дубликатов
+    async removeDuplicates() {
+        const res = this.scanResult();
+        if (!res || !res.duplicate_groups || res.duplicate_groups.length === 0) return;
+
+        const confirmed = confirm('Вы уверены, что хотите удалить дубликаты? Самые старые версии файлов будут сохранены, а их копии удалены с диска.');
+        if (!confirmed) return;
+
+        this.isDeletingDuplicates.set(true);
+        this.errorMessage.set(null);
+
+        try {
+            const [deletedCount, freedSpace] = await this.duplicatesService.removeDuplicates(res.duplicate_groups);
+
+
+            alert(`Успешно удалено файлов: ${deletedCount}\nОсвобождено места на диске: ${this.formatBytes(freedSpace)}`);
+
+            // Перезапускаем сканирование текущей папки, чтобы обновить списки
+            if (this.selectedPath()) {
+                await this.startScan(this.selectedPath());
+            }
+        } catch (error) {
+            this.errorMessage.set(`Ошибка при удалении дубликатов: ${error}`);
+        } finally {
+            this.isDeletingDuplicates.set(false);
         }
     }
 }

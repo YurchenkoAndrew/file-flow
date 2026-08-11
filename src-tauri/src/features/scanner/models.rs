@@ -1,10 +1,10 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // Группа дубликатов с одинаковым содержимым
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DuplicateGroup {
-    pub size: u64,              // Размер файлов в группе в байтах
-    pub files: Vec<FileItem>,   // Список файлов-дубликатов с путями
+    pub size: u64,            // Размер файлов в группе в байтах
+    pub files: Vec<FileItem>, // Список файлов-дубликатов с путями
 }
 
 // Статистика по конкретной категории для круговой диаграммы и списков
@@ -29,6 +29,7 @@ pub struct FileItem {
 // Итоговая сводка, которую сканер возвращает во фронтенд за один раз
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ScanResultSummary {
+    pub session_id: i64,                   // <-- Добавили ID сессии из базы данных
     pub total_size: u64,                   // Общий объем в байтах
     pub total_files_count: usize,          // Всего файлов
     pub category_stats: Vec<CategoryStat>, // Статистика по категориям для графиков
@@ -40,11 +41,11 @@ pub struct ScanResultSummary {
 // Перечисление категорий файлов
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FileCategory {
-    Image,
-    Video,
-    Document,
+    Images,
+    Videos,
+    Documents,
     Audio,
-    Archive,
+    Archives,
     Code,
     Software,
     Mobile,
@@ -60,9 +61,9 @@ impl FileCategory {
         let ext = ext.to_lowercase();
         match ext.as_str() {
             // Изображения и графические исходники
-            "jpg" | "jpeg" | "png" | "gif" | "webp" | "svg" | "heic" | "heif" | "bmp" | "tiff" | "tif"
-            | "ico" | "cur" | "tga" | "xcf" | "pdn" | "raw" | "cr2"
-            | "cr3" | "nef" | "arw" | "dng" | "orf" | "rw2" | "avif" => FileCategory::Image,
+            "jpg" | "jpeg" | "png" | "gif" | "webp" | "svg" | "heic" | "heif" | "bmp" | "tiff"
+            | "tif" | "ico" | "cur" | "tga" | "xcf" | "pdn" | "raw" | "cr2" | "cr3" | "nef"
+            | "arw" | "dng" | "orf" | "rw2" | "avif" => FileCategory::Images,
 
             // Дизайн-исходники (Photoshop, Illustrator, Corel)
             "psd" | "psb" | "ai" | "cdr" | "blend" | "fig" => FileCategory::DesignProjects,
@@ -72,11 +73,13 @@ impl FileCategory {
 
             // Видео
             "mp4" | "mkv" | "avi" | "mov" | "webm" | "flv" | "wmv" | "m4v" | "3gp" | "3g2"
-            | "m2ts" | "mts" | "vob" | "ogv" | "f4v" | "mxf" | "rm" | "rmvb" | "asf" | "divx" => FileCategory::Video,
+            | "m2ts" | "mts" | "vob" | "ogv" | "f4v" | "mxf" | "rm" | "rmvb" | "asf" | "divx" => {
+                FileCategory::Videos
+            }
 
             // Документы
             "pdf" | "doc" | "docx" | "txt" | "rtf" | "xls" | "xlsx" | "ppt" | "pptx" | "odt"
-            | "ods" | "csv" => FileCategory::Document,
+            | "ods" | "csv" => FileCategory::Documents,
 
             // Аудио
             "mp3" | "wav" | "flac" | "aac" | "ogg" | "opus" | "m4a" | "wma" | "amr" => {
@@ -84,7 +87,7 @@ impl FileCategory {
             }
 
             // Архивы
-            "zip" | "rar" | "7z" | "tar" | "gz" | "bz2" | "xz" => FileCategory::Archive,
+            "zip" | "rar" | "7z" | "tar" | "gz" | "bz2" | "xz" => FileCategory::Archives,
 
             // Код и скрипты
             "js" | "ts" | "rs" | "py" | "json" | "xml" | "yaml" | "yml" | "html" | "css"

@@ -1,9 +1,9 @@
 export type FileCategory =
-    | 'Image'
-    | 'Video'
-    | 'Document'
-    | 'Audio'
-    | 'Archive'
+    | 'Images'
+    | 'Videos'
+    | 'Documents'
+    | 'Audios'
+    | 'Archives'
     | 'Code'
     | 'Software'
     | 'Mobile'
@@ -34,6 +34,7 @@ export interface DuplicateGroup {
 }
 
 export interface ScanResultSummary {
+    session_id: number;
     total_size: number;
     total_files_count: number;
     category_stats: CategoryStat[];

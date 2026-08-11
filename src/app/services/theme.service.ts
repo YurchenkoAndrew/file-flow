@@ -2,7 +2,7 @@ import {inject, PLATFORM_ID, Service, signal} from '@angular/core';
 import {isPlatformBrowser} from "@angular/common";
 
 @Service()
-export class Theme {
+export class ThemeService {
     private platformId = inject(PLATFORM_ID);
     // Сигнал для отслеживания состояния темной темы
     public isDarkMode = signal<boolean>(false);

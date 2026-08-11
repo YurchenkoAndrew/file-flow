@@ -30,7 +30,7 @@ impl DatabaseManager {
         Ok(manager)
     }
 
-    // Создание структуры таблиц для хранения сессий «До / После»
+    // Создание структуры таблиц для хранения легкой истории сессий и аналитики
     async fn run_migrations(&self) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"
@@ -40,24 +40,21 @@ impl DatabaseManager {
                 total_size BIGINT NOT NULL,
                 total_files_count INTEGER NOT NULL,
                 duplicates_size BIGINT NOT NULL,
-                status TEXT NOT NULL, -- 'scanned' или 'optimized'
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
+                duplicates_count INTEGER NOT NULL DEFAULT 0,
+                cleaned_size BIGINT NOT NULL DEFAULT 0,
 
-            CREATE TABLE IF NOT EXISTS file_items (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                session_id INTEGER NOT NULL,
-                path TEXT NOT NULL,
-                name TEXT NOT NULL,
-                extension TEXT NOT NULL,
-                size BIGINT NOT NULL,
-                category TEXT NOT NULL,
-                FOREIGN KEY (session_id) REFERENCES scan_sessions (id) ON DELETE CASCADE
-            );
+                -- Флаги этапов (будут становиться true по мере прохождения)
+                is_scanned BOOLEAN DEFAULT 1,
+                is_duplicates_removed BOOLEAN DEFAULT 0,
+                is_optimized BOOLEAN DEFAULT 0,
+
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
             "#,
         )
-        .execute(&self.pool)
-        .await?;
+            .execute(&self.pool)
+            .await?;
 
         Ok(())
     }
