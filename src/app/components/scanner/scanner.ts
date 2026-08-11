@@ -1,4 +1,4 @@
-import {Component, computed, inject, signal} from '@angular/core';
+import {Component, computed, inject, OnInit, signal} from '@angular/core';
 import {FileCategory, ScanResultSummary} from "../../models/scanner.model";
 import {open} from '@tauri-apps/plugin-dialog';
 import {MatCardModule} from "@angular/material/card";
@@ -15,6 +15,7 @@ import {ScannerService} from "../../services/scanner";
 import {SharedService} from "../../services/shared";
 import {Color, LegendPosition, NgxChartsModule} from "@swimlane/ngx-charts";
 import {Theme} from "../../services/theme";
+import {StateService} from "../../services/state.service";
 
 @Component({
     selector: 'app-scanner',
@@ -36,22 +37,32 @@ import {Theme} from "../../services/theme";
     templateUrl: './scanner.html',
     styleUrl: './scanner.css',
 })
-export class Scanner {
+export class Scanner implements OnInit {
     private scannerService = inject(ScannerService);
-    private sharedService = inject(SharedService);// 1. Инжектируем сервис тем
+    private sharedService = inject(SharedService);
+    private readonly sharedState = inject(StateService);
+    // 1. Инжектируем сервис тем
     private themeService = inject(Theme);
     // Сигналы Angular для реактивного состояния
     isLoading = signal<boolean>(false);
     selectedPath = signal<string>('');
     scanResult = signal<ScanResultSummary | null>(null);
     errorMessage = signal<string | null>(null);
-    legendPosition: LegendPosition = LegendPosition.Right;// 2. Берем сигнал напрямую из сервиса, а не создаем локальный!
+    legendPosition: LegendPosition = LegendPosition.Right;
+    // 2. Берем сигнал напрямую из сервиса, а не создаем локальный!
     isDarkMode = this.themeService.isDarkMode;
-
     // Теперь computed будет реактивно пересчитываться при изменении темы
     chartScheme = computed<string | Color>(() => {
         return this.isDarkMode() ? 'vivid' : 'cool';
     });
+
+    ngOnInit() {
+        // Если в общем состоянии уже есть сохраненный путь, подставляем его в поле
+        const savedPath = this.sharedState.lastScannedPath();
+        if (savedPath && !this.selectedPath()) {
+            this.selectedPath.set(savedPath);
+        }
+    }
 
     // Словарь для красивых названий категорий на русском
     categoryNames: Record<FileCategory, string> = {
@@ -82,6 +93,7 @@ export class Scanner {
 
             if (folderPath && typeof folderPath === 'string') {
                 this.selectedPath.set(folderPath); // Просто заполняем путь в инпут, сканирование по кнопке!
+                this.sharedState.lastScannedPath.set(folderPath); // Сохраняем в общее состояние для сортировщика
             }
         } catch (error) {
             this.errorMessage.set(`Ошибка выбора папки: ${error}`);

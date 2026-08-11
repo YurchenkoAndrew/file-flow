@@ -5,6 +5,7 @@ pub mod shared;
 
 // Импортируем нашу команду из структуры фичи сканера
 use crate::features::scanner::commands::start_scan;
+use crate::features::sorter::commands::start_sorting;
 use crate::shared::commands::reveal_file_in_folder;
 use database::DatabaseManager;
 use tauri::Manager;
@@ -35,7 +36,11 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![start_scan, reveal_file_in_folder])
+        .invoke_handler(tauri::generate_handler![
+            start_scan,
+            reveal_file_in_folder,
+            start_sorting
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
