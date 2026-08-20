@@ -36,7 +36,13 @@
     ],
     "windows": {
       "wix": {
-        "language": "ru-RU"
+        "language": "ru-RU",
+        "fragmentPaths": [
+          "cleanup.wxs"
+        ],
+        "componentRefs": [
+          "CleanupAppDataFolder"
+        ]
       }
     },
     "android": {

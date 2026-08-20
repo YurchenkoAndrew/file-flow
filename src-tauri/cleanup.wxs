@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="TARGETDIR">
+            <Directory Id="AppDataFolder" Name="AppData">
+                <Directory Id="AppVendorFolder" Name="kz.wsa">
+                    <Directory Id="AppSpecificFolder" Name="file-flow">
+
+                        <Component Id="CleanupAppDataFolder" Guid="12345678-1234-1234-1234-1234567890AB">
+                            <!-- Обязательный ключ реестра для HKCU -->
+                            <RegistryValue Root="HKCU" Key="Software\kz.wsa\file-flow" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+
+                            <!-- Удаляем базу данных -->
+                            <RemoveFile Id="RemoveDbFile" Name="file_flow.db" On="uninstall" />
+
+                            <!-- Удаляем сами папки. Обрати внимание на атрибут Directory у второй команды! -->
+                            <RemoveFolder Id="RemoveAppSpecificFolder" On="uninstall" />
+                            <RemoveFolder Id="RemoveAppVendorFolder" Directory="AppVendorFolder" On="uninstall" />
+                        </Component>
+
+                    </Directory>
+                </Directory>
+            </Directory>
+        </DirectoryRef>
+    </Fragment>
+</Wix>

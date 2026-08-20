@@ -8,12 +8,16 @@ pub struct DatabaseManager {
 
 impl DatabaseManager {
     // Инициализация базы данных и создание таблиц
+    // Инициализация базы данных и создание таблиц
     pub async fn init(app_handle: &tauri::AppHandle) -> Result<Self, sqlx::Error> {
-        // Получаем стандартную системную папку для данных приложения (например, AppData на Windows)
-        let app_dir = app_handle
+        // Получаем стандартную системную папку для данных приложения (AppData\Roaming\kz.wsa)
+        let base_app_dir = app_handle
             .path()
             .app_data_dir()
             .unwrap_or_else(|_| PathBuf::from("."));
+
+        // Изолируем базу в отдельную подпапку file-flow
+        let app_dir = base_app_dir.join("file-flow");
 
         // Создаем директорию, если её нет
         tokio::fs::create_dir_all(&app_dir).await.ok();
