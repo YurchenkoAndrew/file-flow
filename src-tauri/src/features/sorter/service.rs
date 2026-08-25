@@ -5,6 +5,7 @@ use rayon::prelude::*;
 use sqlx::SqlitePool;
 use std::path::{Path, PathBuf};
 use tokio::fs;
+use crate::features::sorter::repository::SorterRepository;
 
 pub struct FileSorter;
 
@@ -106,7 +107,7 @@ impl FileSorter {
         }
 
         // 4. Обновляем флаг оптимизации сессии в базе данных
-        Self::mark_session_as_optimized(pool, options.session_id, &options.source_path)
+        SorterRepository::mark_session_as_optimized(pool, options.session_id, &options.source_path)
             .await
             .ok();
 
@@ -189,42 +190,5 @@ impl FileSorter {
             }
             counter += 1;
         }
-    }
-
-    /// Обновление флага оптимизации в таблице scan_sessions
-    async fn mark_session_as_optimized(
-        pool: &SqlitePool,
-        session_id: Option<i64>,
-        path: &str
-    ) -> Result<(), sqlx::Error> {
-        if let Some(id) = session_id {
-            // Если пришел точный ID сессии — обновляем конкретную запись
-            sqlx::query(
-                r#"
-                UPDATE scan_sessions
-                SET is_optimized = 1
-                WHERE id = ?
-                "#,
-            )
-                .bind(id)
-                .execute(pool)
-                .await?;
-        } else {
-            // Резервный вариант по пути, если ID не передали
-            sqlx::query(
-                r#"
-                UPDATE scan_sessions
-                SET is_optimized = 1
-                WHERE path = ? AND is_optimized = 0
-                ORDER BY created_at DESC
-                LIMIT 1
-                "#,
-            )
-                .bind(path)
-                .execute(pool)
-                .await?;
-        }
-
-        Ok(())
     }
 }
