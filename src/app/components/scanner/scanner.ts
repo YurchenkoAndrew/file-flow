@@ -146,29 +146,15 @@ export class Scanner {
 
     // Нативная функция форматирования для выносок (стрелочек) графика
     pieLabelFormatting = (label: string): string => {
-        // Получаем наши актуальные данные
-        const chartData = this.getChartData();
-        // Ищем текущую категорию по имени, чтобы достать её размер
-        const item = chartData.find(d => d.name === label);
-
-        if (item) {
-            // Достаем настоящий размер (используем extra.realValue, если делали фикс для мелких файлов)
-            const realSize = item.extra?.realValue ?? item.value;
-            // Возвращаем красивую строку: "Категория (Размер)"
-            return `${label} (${this.formatBytes(realSize)})`;
-        }
-
-        return label; // Фоллбэк, если ничего не нашлось
+        // Переменная label уже приходит к нам готовой: "Изображения (328.56 КБ)"
+        // Нам больше не нужно ничего вычислять и приклеивать к ней.
+        return label;
     }
 
-    // Форматирование значения для тултипа графиков
+    // Форматирование значения для тултипа (при наведении мышки)
     tooltipFormatting = (data: any): string => {
-        const name = data.data?.name || data.data?.label || '';
-
-        // Пытаемся взять честный размер из extra.realValue. Если его вдруг нет, берем стандартный value.
-        const value = data.data?.extra?.realValue ?? data.value ?? data.data?.value ?? 0;
-
-        return `${name}: ${this.formatBytes(value)}`;
+        // Берем готовое имя из данных, которое уже содержит размер
+        return data.data?.name || data.data?.label || ''; // Просто возвращаем его без дублирования двоеточием
     }
 
     // Преобразуем данные категорий для ngx-charts
