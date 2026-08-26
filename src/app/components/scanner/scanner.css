@@ -189,3 +189,57 @@
     color: #f57c00;
     padding-left: 5px;
 }
+
+/* Стили для карточки отчета после удаления дубликатов */
+.report-card {
+    border-left: 4px solid var(--app-primary-color);
+}
+
+.report-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+}
+
+.success-icon {
+    color: var(--app-primary-color);
+}
+
+.stats-grid {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.stat-box {
+    flex: 1;
+    padding: 16px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: #666;
+}
+
+.success-box .stat-value {
+    color: var(--app-primary-color);
+}
+
+/* Для темной темы, если у тебя есть глобальные стили для нее, инвертируем фон плашек */
+:host-context(.dark-theme) .stat-box {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+:host-context(.dark-theme) .stat-label {
+    color: #aaa;
+}

@@ -16,7 +16,7 @@ import {SharedService} from "../../services/shared.service";
 import {Color, LegendPosition, NgxChartsModule} from "@swimlane/ngx-charts";
 import {ThemeService} from "../../services/theme.service";
 import {StateService} from "../../services/state.service";
-import {DuplicatesService} from "../../services/duplicates.service";
+import {CleanupResponse, DuplicatesService} from "../../services/duplicates.service";
 
 @Component({
     selector: 'app-scanner',
@@ -51,6 +51,9 @@ export class Scanner {
     selectedPath = signal<string>('');
     scanResult = signal<ScanResultSummary | null>(null);
     errorMessage = signal<string | null>(null);
+    // ДОБАВЛЕНО: запоминаем активный таб и храним отчет
+    activeTabIndex = signal<number>(0);
+    cleanupReport = signal<CleanupResponse | null>(null);
     legendPosition: LegendPosition = LegendPosition.Right;
     // 2. Берем сигнал напрямую из сервиса, а не создаем локальный!
     isDarkMode = this.themeService.isDarkMode;
@@ -109,14 +112,19 @@ export class Scanner {
     }
 
     // И сам метод старта сканирования:
-    async startScan(path: string) {
+    // ОБНОВЛЕНО: добавлен флаг isRescan, чтобы не стирать отчет после удаления
+    async startScan(path: string, isRescan: boolean = false) {
         this.isLoading.set(true);
         this.errorMessage.set(null);
+
+        // Стираем старый отчет, только если это новое ручное сканирование
+        if (!isRescan) {
+            this.cleanupReport.set(null);
+        }
 
         try {
             const result = await this.scannerService.scanDirectory(path);
             this.scanResult.set(result);
-            // Сохраняем сессию и путь в глобальное состояние
             if (result.session_id) {
                 this.sharedState.setActiveSession(result.session_id, path, result);
             }
@@ -208,25 +216,33 @@ export class Scanner {
     }
 
     // Метод удаления дубликатов
+    // ОБНОВЛЕНО: убран alert, результат пишется в сигнал, вызывается startScan с флагом
     async removeDuplicates() {
         const res = this.scanResult();
         if (!res || !res.duplicate_groups || res.duplicate_groups.length === 0) return;
+
+        const currentSessionId = this.sharedState.currentSessionId();
+        if (!currentSessionId) {
+            this.errorMessage.set('Нет активной сессии. Просканируйте папку заново.');
+            return;
+        }
 
         const confirmed = confirm('Вы уверены, что хотите удалить дубликаты? Самые старые версии файлов будут сохранены, а их копии удалены с диска.');
         if (!confirmed) return;
 
         this.isDeletingDuplicates.set(true);
         this.errorMessage.set(null);
+        this.cleanupReport.set(null); // Прячем прошлый отчет, если удаляем снова
 
         try {
-            const [deletedCount, freedSpace] = await this.duplicatesService.removeDuplicates(res.duplicate_groups);
+            const result = await this.duplicatesService.removeDuplicates(currentSessionId, res.duplicate_groups);
 
+            // Сохраняем красивый отчет
+            this.cleanupReport.set(result);
 
-            alert(`Успешно удалено файлов: ${deletedCount}\nОсвобождено места на диске: ${this.formatBytes(freedSpace)}`);
-
-            // Перезапускаем сканирование текущей папки, чтобы обновить списки
+            // Перезапускаем сканирование тихо (isRescan = true)
             if (this.selectedPath()) {
-                await this.startScan(this.selectedPath());
+                await this.startScan(this.selectedPath(), true);
             }
         } catch (error) {
             this.errorMessage.set(`Ошибка при удалении дубликатов: ${error}`);

@@ -91,8 +91,22 @@ impl FileSorter {
 
             let final_dest = Self::resolve_name_collision(dest).await;
 
+            // ОБНОВЛЕННАЯ ЛОГИКА КОПИРОВАНИЯ И ПЕРЕНОСА
             let res = if copy_files {
-                fs::copy(&src, &final_dest).await.map(|_| ())
+                // Копируем файл
+                match fs::copy(&src, &final_dest).await {
+                    Ok(_) => {
+                        // Пытаемся перенести оригинальные даты (модификации и доступа)
+                        if let Ok(meta) = std::fs::metadata(&src) {
+                            let mtime = filetime::FileTime::from_last_modification_time(&meta);
+                            let atime = filetime::FileTime::from_last_access_time(&meta);
+                            // Игнорируем ошибки установки времени (некоторые ФС могут не поддерживать)
+                            let _ = filetime::set_file_times(&final_dest, atime, mtime);
+                        }
+                        Ok(())
+                    }
+                    Err(e) => Err(e),
+                }
             } else {
                 fs::rename(&src, &final_dest).await
             };

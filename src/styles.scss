@@ -39,6 +39,7 @@ html {
   color-scheme: light;
   // Достаем primary программно из светлой темы
   --app-primary-color: #{mat.get-theme-color($my-light-theme, primary)};
+  --app-error-color: #{mat.get-theme-color($my-light-theme, error)};
 }
 
 // Если на body висит класс 'dark-theme', переключаем переменные на темную палитру
@@ -48,6 +49,7 @@ body.dark-theme {
   color-scheme: dark;
   // Достаем primary программно из темной темы
   --app-primary-color: #{mat.get-theme-color($my-dark-theme, primary)};
+  --app-error-color: #{mat.get-theme-color($my-dark-theme, error)};
 }
 
 /* ==========================================================================

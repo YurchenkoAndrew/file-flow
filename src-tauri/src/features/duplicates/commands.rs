@@ -1,12 +1,22 @@
+use crate::database::DatabaseManager;
+use crate::features::duplicates::models::CleanupDuplicatesResponse;
 use crate::features::duplicates::service::DuplicateCleaner;
 use crate::features::scanner::models::DuplicateGroup;
 
+// Пример того, как это будет вызываться в команде Tauri:
 #[tauri::command]
-pub async fn remove_duplicates(groups: Vec<DuplicateGroup>) -> Result<(usize, u64), String> {
-    // Вызываем сервис очистки дубликатов
-    let result = DuplicateCleaner::remove_duplicates(groups)
-        .await
-        .map_err(|e| e.to_string())?;
+pub async fn clean_duplicates_command(
+    session_id: i64, // Фронтенд должен передать ID сессии
+    groups: Vec<DuplicateGroup>,
+    db: tauri::State<'_, DatabaseManager>,
+) -> Result<CleanupDuplicatesResponse, String> {
+    let pool = db.pool();
 
-    Ok(result)
+    match DuplicateCleaner::remove_duplicates(pool, session_id, groups).await {
+        Ok((count, space)) => Ok(CleanupDuplicatesResponse {
+            count,
+            freed_space: space,
+        }),
+        Err(e) => Err(e.to_string()),
+    }
 }

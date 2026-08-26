@@ -33,28 +33,28 @@ export class Sorter {
 
     title = 'Сортировщик';
     private sorterService = inject(SorterService);
+    private sharedState = inject(StateService);
 
-    // Пути и настройки (объявлены как сигналы для мгновенного обновления интерфейса)
+    // Пути и настройки
     sourcePath = signal<string>('');
     destinationPath = signal<string>('');
-    operationMode: string = 'copy'; // 'copy' или 'move'
+    operationMode: string = 'copy';
 
     // Состояние процесса
     isProcessing = signal<boolean>(false);
     progressValue = signal<number>(0);
     statusMessage = signal<string>('Готов к работе');
-    private sharedState = inject(StateService);
+
+    // ДОБАВЛЕНО: Сигнал для хранения отчета
+    sortingReport = signal<{success_count: number, error_count: number, errors?: string[]} | null>(null);
 
     ngOnInit() {
-        // Если в состоянии уже есть активный путь от сканера, автоматически подставляем его в сортер
         const currentPath = this.sharedState.activePath();
         if (currentPath && !this.sourcePath()) {
             this.sourcePath.set(currentPath);
         }
     }
 
-
-    // Выбор папки-источника через нативный диалог Tauri
     async selectSource() {
         try {
             const selected = await open({
@@ -70,7 +70,6 @@ export class Sorter {
         }
     }
 
-    // Выбор папки-назначения через нативный диалог Tauri
     async selectDestination() {
         try {
             const selected = await open({
@@ -86,18 +85,19 @@ export class Sorter {
         }
     }
 
-    // Запуск сортировки
     async startSorting() {
         if (!this.sourcePath() || !this.destinationPath()) {
+            // Оставляем алерт только для валидации (или можно заменить на Snackbar)
             alert('Пожалуйста, выберите папки источника и назначения!');
             return;
         }
 
+        // Очищаем предыдущий отчет перед новым запуском
+        this.sortingReport.set(null);
         this.isProcessing.set(true);
         this.statusMessage.set('Выполняется сортировка и структурирование файлов...');
 
         try {
-            // Достаем currentSessionId из глобального состояния, если оно есть
             const sessionId = this.sharedState.currentSessionId();
 
             const options: SorterOptions & { session_id?: number | null } = {
@@ -105,29 +105,26 @@ export class Sorter {
                 target_directory: this.destinationPath(),
                 copy_files: this.operationMode === 'copy',
                 group_by_year: true,
-                session_id: sessionId // Передаем ID сессии на бэкенд!
+                session_id: sessionId
             };
 
             const result = await this.sorterService.startSorting(options);
 
-            // Красивый итог операции
-            const actionText = this.operationMode === 'copy' ? 'скопировано' : 'перенесено';
-            this.statusMessage.set(`Готово! Успешно ${actionText}: ${result.success_count}, ошибок: ${result.error_count}`);
-
-            // Показываем детальный отчет пользователю
-            alert(
-                `📊 Отчет о сортировке:\n\n` +
-                `• Успешно обработано: ${result.success_count}\n` +
-                `• Ошибок: ${result.error_count}` +
-                (result.error_count > 0 ? `\n\nПроверьте консоль для деталей по ошибкам.` : '')
-            );
+            // Сохраняем результат в сигнал вместо вызова alert()
+            this.sortingReport.set(result);
+            this.statusMessage.set('Сортировка успешно завершена!');
 
             if (result.error_count > 0) {
                 console.warn('Ошибки при сортировке:', result.errors);
             }
         } catch (error) {
-            this.statusMessage.set(`Ошибка при сортировке: ${error}`);
-            alert(`Не удалось завершить сортировку:\n${error}`);
+            this.statusMessage.set(`Произошла ошибка при сортировке.`);
+            // Если ошибка критическая (упал бэкенд), показываем её в отчете как 1 ошибку
+            this.sortingReport.set({
+                success_count: 0,
+                error_count: 1,
+                errors: [String(error)]
+            });
         } finally {
             this.isProcessing.set(false);
         }

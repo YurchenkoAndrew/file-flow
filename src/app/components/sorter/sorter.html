@@ -1,6 +1,7 @@
 <div class="app-page-container">
 
     <mat-card class="app-header-card mat-elevation-z1" appearance="outlined">
+        <!-- Твой существующий код шапки и контента карточки -->
         <mat-card-header>
             <mat-card-title>
                 <mat-icon color="primary">move_to_inbox</mat-icon>
@@ -10,7 +11,6 @@
         </mat-card-header>
 
         <mat-card-content>
-            <!-- Выбор папки-источника -->
             <div class="path-row" style="margin-top: 16px;">
                 <mat-form-field appearance="outline" class="full-width">
                     <mat-label>Папка-источник (например, Загрузки)</mat-label>
@@ -21,7 +21,6 @@
                 </mat-form-field>
             </div>
 
-            <!-- Выбор папки-назначения -->
             <div class="path-row">
                 <mat-form-field appearance="outline" class="full-width">
                     <mat-label>Папка назначения</mat-label>
@@ -32,7 +31,6 @@
                 </mat-form-field>
             </div>
 
-            <!-- Режим работы (Копировать / Перенести) -->
             <div class="mode-selection">
                 <label class="label-title">Режим работы:</label>
                 <mat-radio-group [(ngModel)]="operationMode">
@@ -41,7 +39,6 @@
                 </mat-radio-group>
             </div>
 
-            <!-- Прогресс выполнения -->
             @if (isProcessing()) {
                 <div class="progress-section" style="margin-top: 16px;">
                     <p class="status-text">{{ statusMessage() }}</p>
@@ -61,5 +58,45 @@
             </button>
         </mat-card-actions>
     </mat-card>
+
+    <!-- ДОБАВЛЕНО: Блок вывода отчета после сортировки -->
+    @if (sortingReport(); as report) {
+        <mat-card class="report-card mat-elevation-z1" [class.has-errors]="report.error_count > 0" appearance="outlined">
+            <mat-card-header>
+                <mat-card-title class="report-title">
+                    <mat-icon [class.success-icon]="report.error_count === 0" [class.error-icon]="report.error_count > 0">
+                        {{ report.error_count === 0 ? 'task_alt' : 'warning_amber' }}
+                    </mat-icon>
+                    Отчет о работе
+                </mat-card-title>
+            </mat-card-header>
+
+            <mat-card-content>
+                <div class="stats-grid">
+                    <div class="stat-box success-box">
+                        <div class="stat-value">{{ report.success_count }}</div>
+                        <div class="stat-label">Успешно обработано</div>
+                    </div>
+
+                    <div class="stat-box error-box" [class.active-error]="report.error_count > 0">
+                        <div class="stat-value">{{ report.error_count }}</div>
+                        <div class="stat-label">Ошибок</div>
+                    </div>
+                </div>
+
+                <!-- Выводим список ошибок, если они есть -->
+                @if (report.error_count > 0 && report.errors && report.errors.length > 0) {
+                    <div class="errors-list">
+                        <h4>Детали ошибок:</h4>
+                        <ul>
+                            @for (err of report.errors; track $index) {
+                                <li>{{ err }}</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </mat-card-content>
+        </mat-card>
+    }
 
 </div>

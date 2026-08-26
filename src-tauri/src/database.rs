@@ -46,6 +46,7 @@ impl DatabaseManager {
                 duplicates_size BIGINT NOT NULL,
                 duplicates_count INTEGER NOT NULL DEFAULT 0,
                 cleaned_size BIGINT NOT NULL DEFAULT 0,
+                cleaned_files_count INTEGER NOT NULL DEFAULT 0,
 
                 -- Флаги этапов (будут становиться true по мере прохождения)
                 is_scanned BOOLEAN DEFAULT 1,

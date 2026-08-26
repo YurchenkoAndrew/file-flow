@@ -1,3 +1,4 @@
+/* Твой существующий CSS */
 .mode-selection {
     margin: 20px 0;
     display: flex;
@@ -19,5 +20,90 @@
     .status-text {
         margin-bottom: 8px;
         font-size: 14px;
+    }
+}
+
+/* ДОБАВЛЕНО: Стили для отчета */
+.report-card {
+    margin-top: 24px;
+    border-left: 4px solid var(--app-primary-color); /* По умолчанию зеленая полоса успеха */
+    transition: all 0.3s ease;
+
+    &.has-errors {
+        border-left-color: var(--app-error-color); /* Красная полоса, если есть ошибки */
+    }
+
+    .report-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 18px;
+
+
+        .success-icon {
+            color: var(--app-primary-color);
+        }
+        .error-icon { color: var(--app-error-color); }
+    }
+
+    .stats-grid {
+        display: flex;
+        gap: 16px;
+        margin-top: 16px;
+
+        .stat-box {
+            flex: 1;
+            padding: 16px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.03);
+            text-align: center;
+
+            .stat-value {
+                font-size: 28px;
+                font-weight: 500;
+                margin-bottom: 4px;
+            }
+
+            .stat-label {
+                font-size: 13px;
+                color: #666;
+            }
+
+            &.success-box .stat-value {
+                color: var(--app-primary-color);
+            }
+
+            &.error-box {
+                .stat-value { color: #9e9e9e; } /* Серый, если ошибок нет */
+                &.active-error {
+                    background: rgba(244, 67, 54, 0.05);
+                    .stat-value { color: var(--app-error-color); }
+                }
+            }
+        }
+    }
+
+    .errors-list {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+        h4 {
+            margin: 0 0 12px 0;
+            color: var(--app-error-color);
+            font-weight: 500;
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 20px;
+            color: var(--app-error-color);
+            font-size: 13px;
+            line-height: 1.5;
+
+            li {
+                margin-bottom: 6px;
+            }
+        }
     }
 }
