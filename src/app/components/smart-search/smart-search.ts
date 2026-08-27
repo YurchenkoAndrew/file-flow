@@ -49,6 +49,8 @@ export class SmartSearch {
     hasSearched = signal<boolean>(false); // Флаг: выполнялся ли поиск
     private smartSearchService = inject(SmartSearchService);
     private searchTimer: ReturnType<typeof setTimeout> | null = null;
+    scanStatus = signal<'idle' | 'success' | 'error'>('idle');
+    scanMessage = signal<string>('');
 
     // Выбор папок через Tauri Dialog с правильной типизацией
     async selectFolders() {
@@ -88,15 +90,27 @@ export class SmartSearch {
         if (folders.length === 0) return;
 
         this.isScanning.set(true);
+        this.scanStatus.set('idle'); // Сбрасываем статус перед новым запуском
+
         try {
             for (const folder of folders) {
                 await this.smartSearchService.startNeuralScan(folder);
             }
-            alert('Индексация папок успешно завершена!');
+            // Устанавливаем статус успеха
+            this.scanStatus.set('success');
+            this.scanMessage.set('Индексация успешно завершена!');
         } catch (error) {
-            alert('Произошла ошибка во время сканирования.');
+            // Устанавливаем статус ошибки
+            this.scanStatus.set('error');
+            this.scanMessage.set('Произошла ошибка при сканировании');
+            console.error(error);
         } finally {
             this.isScanning.set(false);
+
+            // Прячем сообщение через 5 секунд, чтобы оно не висело вечно
+            setTimeout(() => {
+                this.scanStatus.set('idle');
+            }, 5000);
         }
     }
 

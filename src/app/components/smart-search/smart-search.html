@@ -22,13 +22,27 @@
                         <mat-icon>sync</mat-icon>
                         {{ isScanning() ? 'Индексация...' : 'Запустить сканирование' }}
                     </button>
+
+                    <!-- Блок с уведомлением напротив кнопок -->
+                    @if (scanStatus() === 'success') {
+                        <span class="status-message success">
+                            <mat-icon inline="true">check_circle</mat-icon>
+                            {{ scanMessage() }}
+                        </span>
+                    }
+                    @if (scanStatus() === 'error') {
+                        <span class="status-message error">
+                            <mat-icon inline="true">error</mat-icon>
+                            {{ scanMessage() }}
+                        </span>
+                    }
                 </div>
 
                 <!-- Используем вызов сигнала со скобками () -->
                 @if (scannedFolders().length > 0) {
                     <mat-list class="folder-list">
                         @for (folder of scannedFolders(); track folder; let i = $index) {
-                            <mat-list-item>
+                            <mat-list-item class="list-of-added_folders">
                                 <mat-icon matListItemIcon>folder</mat-icon>
                                 <span matListItemTitle class="folder-path" [title]="folder">{{ folder }}</span>
                                 <button mat-icon-button color="warn" (click)="removeFolder(i)" title="Удалить из списка"
