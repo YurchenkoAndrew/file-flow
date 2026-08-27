@@ -1,9 +1,9 @@
 [package]
 name = "app"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
+version = "0.2.0"
+description = "File flow"
+authors = ["Andrew Yurchenko"]
+license-file = "license.txt"
 repository = ""
 edition = "2021"
 rust-version = "1.77.2"
@@ -19,7 +19,7 @@ tauri-build = { version = "2.6.3", features = [] }
 
 [dependencies]
 serde = { version = "1.0.229", features = ["derive"] }
-log = "0.4.33"
+log = "0.4.34"
 tauri = { version = "2.11.5", features = ["tray-icon"] } # <--- КРИТИЧЕСКИ ВАЖНО
 tauri-plugin-log = "2.9.0"
 tauri-plugin-dialog = "2.7.2"
@@ -29,11 +29,11 @@ chrono = { version = "0.4.45", features = ["serde"] }
 
 sqlx = { version = "0.9.0", features = ["sqlite", "runtime-tokio", "tls-native-tls", "macros", "chrono"] }
 md5 = "0.8.1"
-rayon = "1.10.0"
+rayon = "1.12.0"
 filetime = "0.2.29"
 fastembed = "6.0.1"
 tauri-plugin-autostart = "2.5.1"
 serde_json = "1.0.151"
 image = "0.25.10"
 pdf-extract = "0.12.0"
-zip = "4.2.0"
+zip = "8.6.0"
