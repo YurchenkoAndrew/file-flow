@@ -46,13 +46,17 @@ impl SmartSearchService {
         // 2. Выгружаем все документы из базы
         let docs = SmartSearchRepository::fetch_all_embeddings(pool).await?;
 
-        // 3. Считаем косинусное расстояние и проверяем текстовое совпадение
+        // 3. Умная разбивка запроса: очищаем от пунктуации и фильтруем предлоги
         let query_lower = query_text.to_lowercase();
-        // Берем ключевые слова из запроса (все слова длиннее 2 символов, чтобы захватить короткие ID или суммы)
+
         let query_words: Vec<String> = query_lower
             .split_whitespace()
-            .filter(|w| w.chars().count() > 2)
-            .map(|w| w.to_string())
+            .map(|w| w.trim_matches(|c: char| c.is_ascii_punctuation()).to_string()) // Убираем точки, чтобы "г." стало "г"
+            .filter(|w| {
+                // Оставляем слово, ЕСЛИ это число (даже из 2 цифр, например "18")
+                // ИЛИ если в нем больше 2 букв (отсекаем "на", "от", "по", "г")
+                w.chars().all(char::is_numeric) || w.chars().count() > 2
+            })
             .collect();
 
         let mut scored_results: Vec<SearchResultDto> = docs
@@ -61,45 +65,34 @@ impl SmartSearchService {
                 let text_lower = text_content.to_lowercase();
                 let path_lower = file_path.to_lowercase();
 
-                // Проверяем, является ли файл изображением
-                let is_image = path_lower.ends_with(".jpg")
-                    || path_lower.ends_with(".jpeg")
-                    || path_lower.ends_with(".png")
-                    || path_lower.ends_with(".webp")
-                    || path_lower.ends_with(".bmp")
-                    || path_lower.ends_with(".tiff");
+                // Базовая оценка смысла от нейросети
+                let mut score = cosine_similarity(&query_embedding, &doc_embedding);
 
-                if is_image && !query_words.is_empty() {
-                    let has_exact_word = query_words
-                        .iter()
-                        .any(|word| text_lower.contains(word) || path_lower.contains(word));
+                if !query_words.is_empty() {
+                    let mut matched_words_count = 0;
 
-                    // ОТЛАДКА: Выведем в консоль результаты проверки картинки
-                    println!(
-                        "SEARCH CHECK IMAGE: {} | Words: {:?} | Match: {}",
-                        file_path, query_words, has_exact_word
-                    );
+                    for word in &query_words {
+                        if text_lower.contains(word) || path_lower.contains(word) {
+                            matched_words_count += 1;
+                            // Накидываем жирный бонус за КАЖДОЕ найденное слово (+15%)
+                            score += 0.15;
+                        }
+                    }
 
-                    if !has_exact_word {
+                    // ЖЕСТКИЙ ФИЛЬТР: если ни одно слово не совпало - выбрасываем файл
+                    if matched_words_count == 0 {
                         return None;
+                    }
+
+                    // Супер-бонус за точную фразу целиком
+                    if text_lower.contains(&query_lower) || path_lower.contains(&query_lower) {
+                        score += 0.5;
                     }
                 }
 
-                // ПРОВЕРКА ДЛЯ ДОКУМЕНТОВ (PDF, TXT и т.д.):
-                // Для обычных документов используем более мягкий поиск по корню слова
-                if !is_image && !query_words.is_empty() {
-                    let has_keyword_match = query_words.iter().any(|word| {
-                        let root_word: String = word.chars().take(6).collect();
-                        text_lower.contains(&root_word) || path_lower.contains(&root_word)
-                    });
-                    if !has_keyword_match {
-                        return None;
-                    }
-                }
+                // ВАЖНО: Мы БОЛЬШЕ НЕ обрезаем score до 0.99 здесь!
+                // Пусть он растет хоть до 2.0 или 3.0, чтобы точно зафиксировать разницу.
 
-                let score = cosine_similarity(&query_embedding, &doc_embedding);
-
-                // Делаем короткий красивый сниппет текста для интерфейса
                 let snippet = if text_content.chars().count() > 150 {
                     format!("{}...", text_content.chars().take(150).collect::<String>())
                 } else {
@@ -115,7 +108,7 @@ impl SmartSearchService {
             })
             .collect();
 
-        // 4. Сортируем от самых релевантных к менее релевантным
+        // 4. Сортируем по-честному, используя реальные необрезанные баллы (например, 1.8 против 1.2)
         scored_results.sort_by(|a, b| {
             b.score
                 .partial_cmp(&a.score)
@@ -124,6 +117,18 @@ impl SmartSearchService {
 
         // Ограничиваем выдачу топом
         scored_results.truncate(limit);
+
+        // 5. Нормализуем проценты для интерфейса (чтобы не было 180% или 250%)
+        // Берем самый высокий балл (он теперь первый в списке) и пропорционально уменьшаем остальные
+        if let Some(top_result) = scored_results.first() {
+            let max_score = top_result.score;
+            if max_score > 0.99 {
+                for res in &mut scored_results {
+                    // Идеальное масштабирование: лидер получает 99.9%, остальные - пропорционально меньше
+                    res.score = (res.score / max_score) * 0.999;
+                }
+            }
+        }
 
         Ok(scored_results)
     }

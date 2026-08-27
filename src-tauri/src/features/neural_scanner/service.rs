@@ -31,8 +31,8 @@ impl NeuralScannerService {
             // Вместо только текстовых добавляем бухгалтерские форматы изображений
             let valid_extensions = vec![
                 "txt", "md", "csv", "json", "xml", "html", "log", "pdf", // Текст
-                "jpg", "jpeg", "png", "heic", "tiff", "tif", "bmp",
-                "webp", // Изображения
+                "docx", // <--- ДОБАВЛЯЕМ ФОРМАТЫ WORD
+                "jpg", "jpeg", "png", "heic", "tiff", "tif", "bmp", "webp", // Изображения
             ];
             let mut scanned = Vec::new();
 
