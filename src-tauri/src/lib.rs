@@ -19,6 +19,7 @@ use tauri::{
 };
 
 // Единственный сторонний плагин для автозапуска
+use crate::features::smart_search::commands::smart_search_command;
 use tauri_plugin_autostart::MacosLauncher;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -105,7 +106,8 @@ pub fn run() {
             start_sorting,
             clean_duplicates_command,
             start_neural_scan,
-            get_neural_scan_status
+            get_neural_scan_status,
+            smart_search_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
