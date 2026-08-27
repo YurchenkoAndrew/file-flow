@@ -1,0 +1,98 @@
+<div class="smart-search-container">
+    <h2>Умный поиск по документам и сканам</h2>
+
+    <!-- Блок папок (статичный сверху) -->
+    <mat-card class="folders-card">
+        <!-- Блок управления папками -->
+        <mat-card class="folders-card">
+            <mat-card-content>
+                <h3>Папки для индексации</h3>
+
+                <div class="folder-actions">
+                    <button mat-stroked-button color="primary" (click)="selectFolders()">
+                        <mat-icon>create_new_folder</mat-icon>
+                        Добавить папки
+                    </button>
+
+                    <button
+                            mat-flat-button
+                            color="primary"
+                            (click)="startScanning()"
+                            [disabled]="isScanning() || scannedFolders().length === 0">
+                        <mat-icon>sync</mat-icon>
+                        {{ isScanning() ? 'Индексация...' : 'Запустить сканирование' }}
+                    </button>
+                </div>
+
+                <!-- Используем вызов сигнала со скобками () -->
+                @if (scannedFolders().length > 0) {
+                    <mat-list class="folder-list">
+                        @for (folder of scannedFolders(); track folder; let i = $index) {
+                            <mat-list-item>
+                                <mat-icon matListItemIcon>folder</mat-icon>
+                                <span matListItemTitle class="folder-path" [title]="folder">{{ folder }}</span>
+                                <button mat-icon-button color="warn" (click)="removeFolder(i)" title="Удалить из списка"
+                                        matListItemMeta>
+                                    <mat-icon>close</mat-icon>
+                                </button>
+                            </mat-list-item>
+                        }
+                    </mat-list>
+                } @else {
+                    <p class="no-folders">Папки еще не выбраны. Добавьте хотя бы одну.</p>
+                }
+            </mat-card-content>
+        </mat-card>
+    </mat-card>
+
+    <mat-divider class="divider"></mat-divider>
+
+    <!-- Блок поисковой строки (статичный сверху) -->
+    <section class="search-section">
+        <!-- Блок поисковой строки -->
+        <section class="search-section">
+            <mat-form-field appearance="outline" class="search-form-field">
+                <mat-label>Поисковый запрос</mat-label>
+                <input
+                        matInput
+                        type="text"
+                        [(ngModel)]="searchQuery"
+                        (input)="onSearchInput()"
+                        (keyup.enter)="onSearch()"
+                        placeholder="Например: обязательные взносы работодателя, чек..."
+                />
+                <button mat-icon-button matSuffix (click)="onSearch()" [disabled]="isSearching()" title="Найти">
+                    <mat-icon>search</mat-icon>
+                </button>
+            </mat-form-field>
+        </section>
+    </section>
+
+    <!-- Блок результатов (со своим скроллбаром) -->
+    @if (searchResults().length > 0) {
+        <section class="results-section">
+            <h3>Результаты поиска</h3>
+            @for (item of searchResults(); track item.id) {
+                <mat-card class="result-card">
+                    <mat-card-content>
+                        <div class="result-header">
+                            <a (click)="revealFile(item.file_path)" class="file-path-link" title="Показать в папке">
+                                <mat-icon inline="true">folder_open</mat-icon>
+                                {{ item.file_path }}
+                            </a>
+                            <mat-chip-set>
+                                <mat-chip class="relevance-chip">Релевантность: {{ (item.score * 100).toFixed(1) }}%
+                                </mat-chip>
+                            </mat-chip-set>
+                        </div>
+                        <p class="result-snippet">{{ item.snippet }}</p>
+                    </mat-card-content>
+                </mat-card>
+            }
+        </section>
+    }
+
+    @if (searchResults().length === 0 && hasSearched() && !isSearching()) {
+        <p class="no-results">Ничего не найдено по вашему запросу.</p>
+    }
+</div>

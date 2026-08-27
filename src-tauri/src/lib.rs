@@ -10,13 +10,13 @@ use crate::features::scanner::commands::start_scan;
 use crate::features::sorter::commands::start_sorting;
 use crate::shared::commands::reveal_file_in_folder;
 use database::DatabaseManager;
-
 // Базовые импорты Tauri + встроенный трей
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, WindowEvent,
 };
+use tauri_plugin_autostart::ManagerExt;
 
 // Единственный сторонний плагин для автозапуска
 use crate::features::smart_search::commands::smart_search_command;
@@ -39,6 +39,23 @@ pub fn run() {
         ))
         // Настройка приложения при старте
         .setup(|app| {
+            #[cfg(desktop)]
+            {
+                use tauri_plugin_autostart::MacosLauncher;
+
+                // Инициализируем плагин
+                app.handle().plugin(tauri_plugin_autostart::init(
+                    MacosLauncher::LaunchAgent,
+                    None,
+                ))?;
+
+                // Делаем автозапуск активным по умолчанию при первом запуске
+                let autostart_manager = app.autolaunch();
+                if !autostart_manager.is_enabled().unwrap_or(false) {
+                    let _ = autostart_manager.enable();
+                }
+            }
+
             let handle = app.handle().clone();
 
             // Асинхронная инициализация базы данных

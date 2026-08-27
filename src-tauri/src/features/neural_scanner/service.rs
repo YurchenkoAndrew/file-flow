@@ -2,7 +2,6 @@ use rayon::prelude::*;
 use sqlx::SqlitePool;
 use std::collections::HashMap;
 use std::fs;
-use tokio::fs as async_fs;
 use walkdir::WalkDir;
 
 use super::embedder::NeuralEmbedder;
@@ -31,7 +30,7 @@ impl NeuralScannerService {
         let disk_files = tokio::task::spawn_blocking(move || {
             // Вместо только текстовых добавляем бухгалтерские форматы изображений
             let valid_extensions = vec![
-                "txt", "md", "csv", "json", "xml", "html", "log", // Текст
+                "txt", "md", "csv", "json", "xml", "html", "log", "pdf", // Текст
                 "jpg", "jpeg", "png", "heic", "tiff", "tif", "bmp",
                 "webp", // Изображения
             ];
@@ -108,14 +107,56 @@ impl NeuralScannerService {
                         let ext = path.extension().unwrap_or_default().to_string_lossy();
 
                         // Определяем, откуда брать текст: из файла или из картинки через OCR
-                        let content_res = if super::ocr::ImageOcr::is_image(&ext) {
-                            super::ocr::ImageOcr::extract_text_from_image(path)
-                        } else {
-                            async_fs::read_to_string(path).await.map_err(|e| e.into())
-                        };
+                        let ext_string: String = ext.to_string();
+                        let path_buf = path.clone();
+                        let app_clone = app_handle.clone();
+
+                        println!(">>> НАЧАЛО ОБРАБОТКИ ФАЙЛА: {}", path_buf.display());
+
+                        let content_res = tokio::task::spawn_blocking(move || {
+                            if super::ocr::ImageOcr::is_image(&ext_string) {
+                                match super::ocr::ImageOcr::extract_text_from_image(&app_clone, &path_buf) {
+                                    Ok(ocr_text) => {
+                                        println!("--- OCR УСПЕХ ДЛЯ [{}]: [{}] ---", path_buf.display(), ocr_text);
+                                        Ok(ocr_text)
+                                    }
+                                    Err(e) => {
+                                        println!("!!! ОШИБКА OCR ДЛЯ [{}]: {} !!!", path_buf.display(), e);
+                                        Err(e.to_string())
+                                    }
+                                }
+                            } else {
+                                crate::features::neural_scanner::parser::DocumentParser::extract_text(&path_buf, &ext_string)
+                                    .map_err(|e| e.to_string())
+                            }
+                        })
+                            .await
+                            .map_err(|e| e.to_string())?;
+
+                        let content_res = content_res.map_err(|e| {
+                            Box::new(std::io::Error::new(std::io::ErrorKind::Other, e))
+                                as Box<dyn std::error::Error>
+                        });
 
                         if let Ok(content) = content_res {
-                            if !content.trim().is_empty() {
+                            let trimmed = content.trim();
+
+                            if !trimmed.is_empty() {
+                                // ПРОВЕРКА НА МУСОР ОТ OCR: Считаем количество букв (русских, латинских)
+                                let letters_count =
+                                    trimmed.chars().filter(|c| c.is_alphabetic()).count();
+
+                                // Если это картинка, но в ней меньше 25 настоящих букв — это мусор (пейзаж, фото без текста)
+                                let is_img = super::ocr::ImageOcr::is_image(&ext);
+                                if is_img && letters_count < 25 {
+                                    continue; // Пропускаем эту картинку, не тратим ресурсы на эмбеддинги!
+                                }
+
+                                // Для обычных документов тоже проверяем, чтобы там был хоть какой-то осмысленный текст
+                                if !is_img && letters_count < 3 {
+                                    continue;
+                                }
+
                                 current_batch_texts.push(content.clone());
                                 current_batch_meta.push((path, mtime));
 
@@ -137,12 +178,12 @@ impl NeuralScannerService {
                 continue;
             }
 
-            // Rayon: очистка текста
+            // Rayon: безопасная очистка и обрезка текста по символам (без паники на UTF-8)
             let cleaned_texts: Vec<String> = current_batch_texts
                 .into_par_iter()
                 .map(|mut text| {
-                    if text.len() > 2500 {
-                        text.truncate(2500);
+                    if text.chars().count() > 2500 {
+                        text = text.chars().take(2500).collect();
                     }
                     text.trim().to_string()
                 })

@@ -35,7 +35,7 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "resources/ai_models/**/*"
+      "resources/**/*"
     ],
     "windows": {
       "wix": {
@@ -50,14 +50,6 @@
     },
     "android": {
       "debugApplicationIdSuffix": ".debug"
-    }
-  },
-  "plugins": {
-    "autostart": {
-      "macOsLaunchLaunchd": true,
-      "windowsArgs": [
-        "--minimized"
-      ]
     }
   }
 }

@@ -35,6 +35,17 @@
                 <span matListItemTitle>Сортировщик</span>
             </mat-list-item>
 
+            <!-- 2. Умный поиск -->
+            <mat-list-item
+                    routerLink="/smart-search"
+                    routerLinkActive
+                    #rlaSorter="routerLinkActive"
+                    [activated]="rlaSorter.isActive"
+                    (click)="isHandset ? drawer.close() : null">
+                <mat-icon matListItemIcon>move_to_inbox</mat-icon>
+                <span matListItemTitle>Умный поиск</span>
+            </mat-list-item>
+
             <!-- 3. О программе -->
             <mat-list-item
                     routerLink="/about"

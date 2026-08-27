@@ -46,10 +46,57 @@ impl SmartSearchService {
         // 2. Выгружаем все документы из базы
         let docs = SmartSearchRepository::fetch_all_embeddings(pool).await?;
 
-        // 3. Считаем косинусное расстояние для каждого документа
+        // 3. Считаем косинусное расстояние и проверяем текстовое совпадение
+        let query_lower = query_text.to_lowercase();
+        // Берем ключевые слова из запроса (все слова длиннее 2 символов, чтобы захватить короткие ID или суммы)
+        let query_words: Vec<String> = query_lower
+            .split_whitespace()
+            .filter(|w| w.chars().count() > 2)
+            .map(|w| w.to_string())
+            .collect();
+
         let mut scored_results: Vec<SearchResultDto> = docs
             .into_iter()
-            .map(|(id, file_path, text_content, doc_embedding)| {
+            .filter_map(|(id, file_path, text_content, doc_embedding)| {
+                let text_lower = text_content.to_lowercase();
+                let path_lower = file_path.to_lowercase();
+
+                // Проверяем, является ли файл изображением
+                let is_image = path_lower.ends_with(".jpg")
+                    || path_lower.ends_with(".jpeg")
+                    || path_lower.ends_with(".png")
+                    || path_lower.ends_with(".webp")
+                    || path_lower.ends_with(".bmp")
+                    || path_lower.ends_with(".tiff");
+
+                if is_image && !query_words.is_empty() {
+                    let has_exact_word = query_words
+                        .iter()
+                        .any(|word| text_lower.contains(word) || path_lower.contains(word));
+
+                    // ОТЛАДКА: Выведем в консоль результаты проверки картинки
+                    println!(
+                        "SEARCH CHECK IMAGE: {} | Words: {:?} | Match: {}",
+                        file_path, query_words, has_exact_word
+                    );
+
+                    if !has_exact_word {
+                        return None;
+                    }
+                }
+
+                // ПРОВЕРКА ДЛЯ ДОКУМЕНТОВ (PDF, TXT и т.д.):
+                // Для обычных документов используем более мягкий поиск по корню слова
+                if !is_image && !query_words.is_empty() {
+                    let has_keyword_match = query_words.iter().any(|word| {
+                        let root_word: String = word.chars().take(6).collect();
+                        text_lower.contains(&root_word) || path_lower.contains(&root_word)
+                    });
+                    if !has_keyword_match {
+                        return None;
+                    }
+                }
+
                 let score = cosine_similarity(&query_embedding, &doc_embedding);
 
                 // Делаем короткий красивый сниппет текста для интерфейса
@@ -59,23 +106,23 @@ impl SmartSearchService {
                     text_content
                 };
 
-                SearchResultDto {
+                Some(SearchResultDto {
                     id,
                     file_path,
                     snippet,
                     score,
-                }
+                })
             })
             .collect();
 
-        // 4. Сортируем от самых релевантных (score ближе к 1.0) к менее релевантным
+        // 4. Сортируем от самых релевантных к менее релевантным
         scored_results.sort_by(|a, b| {
             b.score
                 .partial_cmp(&a.score)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
 
-        // Ограничиваем выдачу топом (например, топ-10)
+        // Ограничиваем выдачу топом
         scored_results.truncate(limit);
 
         Ok(scored_results)
