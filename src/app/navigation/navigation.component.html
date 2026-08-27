@@ -39,10 +39,10 @@
             <mat-list-item
                     routerLink="/smart-search"
                     routerLinkActive
-                    #rlaSorter="routerLinkActive"
-                    [activated]="rlaSorter.isActive"
+                    #rlaSmartSearch="routerLinkActive"
+                    [activated]="rlaSmartSearch.isActive"
                     (click)="isHandset ? drawer.close() : null">
-                <mat-icon matListItemIcon>move_to_inbox</mat-icon>
+                <mat-icon matListItemIcon>query_stats</mat-icon>
                 <span matListItemTitle>Умный поиск</span>
             </mat-list-item>
 

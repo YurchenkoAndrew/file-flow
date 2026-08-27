@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "File flow",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "identifier": "kz.wsa",
   "build": {
     "frontendDist": "../dist/file-flow/browser",
@@ -27,6 +27,7 @@
     "active": true,
     "targets": "all",
     "publisher": "Andrew Yurchenko",
+    "licenseFile": "license.rtf",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
