@@ -34,6 +34,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "resources": [
+      "resources/ai_models/**/*"
+    ],
     "windows": {
       "wix": {
         "language": "ru-RU",
@@ -47,6 +50,14 @@
     },
     "android": {
       "debugApplicationIdSuffix": ".debug"
+    }
+  },
+  "plugins": {
+    "autostart": {
+      "macOsLaunchLaunchd": true,
+      "windowsArgs": [
+        "--minimized"
+      ]
     }
   }
 }

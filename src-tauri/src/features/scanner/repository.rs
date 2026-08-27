@@ -3,6 +3,35 @@ use sqlx::SqlitePool;
 pub struct FileScannerRepository;
 impl FileScannerRepository {
 
+    pub async fn create_tables(pool: &SqlitePool) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            r#"
+            CREATE TABLE IF NOT EXISTS scan_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                path TEXT NOT NULL,
+                total_size BIGINT NOT NULL,
+                total_files_count INTEGER NOT NULL,
+                duplicates_size BIGINT NOT NULL,
+                duplicates_count INTEGER NOT NULL DEFAULT 0,
+                cleaned_size BIGINT NOT NULL DEFAULT 0,
+                cleaned_files_count INTEGER NOT NULL DEFAULT 0,
+
+                -- Флаги этапов
+                is_scanned BOOLEAN DEFAULT 1,
+                is_duplicates_removed BOOLEAN DEFAULT 0,
+                is_optimized BOOLEAN DEFAULT 0,
+
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            "#,
+        )
+            .execute(pool)
+            .await?;
+
+        Ok(())
+    }
+
 
     // Вспомогательный метод для сохранения или обновления сессии в БД
     pub async fn save_scan_to_db(
