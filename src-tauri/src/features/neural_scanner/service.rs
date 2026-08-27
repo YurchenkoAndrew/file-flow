@@ -29,7 +29,12 @@ impl NeuralScannerService {
 
         // 2. Сканируем дисковую систему
         let disk_files = tokio::task::spawn_blocking(move || {
-            let valid_extensions = vec!["txt", "md", "csv", "json", "xml", "html", "log"];
+            // Вместо только текстовых добавляем бухгалтерские форматы изображений
+            let valid_extensions = vec![
+                "txt", "md", "csv", "json", "xml", "html", "log", // Текст
+                "jpg", "jpeg", "png", "heic", "tiff", "tif", "bmp",
+                "webp", // Изображения
+            ];
             let mut scanned = Vec::new();
 
             for entry in WalkDir::new(path_clone).into_iter().filter_map(|e| e.ok()) {
@@ -100,22 +105,29 @@ impl NeuralScannerService {
             for (path, mtime) in chunk {
                 if let Ok(metadata) = fs::metadata(path) {
                     if metadata.len() <= max_file_size {
-                        if let Ok(content) = async_fs::read_to_string(path).await {
-                            current_batch_texts.push(content.clone());
-                            current_batch_meta.push((path, mtime));
+                        let ext = path.extension().unwrap_or_default().to_string_lossy();
 
-                            current_batch_docs.push(ExtractedDocument {
-                                id: None,
-                                session_id,
-                                file_path: path.to_string_lossy().to_string(),
-                                file_extension: path
-                                    .extension()
-                                    .unwrap_or_default()
-                                    .to_string_lossy()
-                                    .to_string(),
-                                text_content: content,
-                                embedding: None,
-                            });
+                        // Определяем, откуда брать текст: из файла или из картинки через OCR
+                        let content_res = if super::ocr::ImageOcr::is_image(&ext) {
+                            super::ocr::ImageOcr::extract_text_from_image(path)
+                        } else {
+                            async_fs::read_to_string(path).await.map_err(|e| e.into())
+                        };
+
+                        if let Ok(content) = content_res {
+                            if !content.trim().is_empty() {
+                                current_batch_texts.push(content.clone());
+                                current_batch_meta.push((path, mtime));
+
+                                current_batch_docs.push(ExtractedDocument {
+                                    id: None,
+                                    session_id,
+                                    file_path: path.to_string_lossy().to_string(),
+                                    file_extension: ext.to_string(),
+                                    text_content: content,
+                                    embedding: None,
+                                });
+                            }
                         }
                     }
                 }

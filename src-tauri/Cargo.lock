@@ -109,6 +109,7 @@ dependencies = [
  "chrono",
  "fastembed",
  "filetime",
+ "image",
  "log",
  "md5",
  "rayon",
