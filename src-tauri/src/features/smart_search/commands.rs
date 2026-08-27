@@ -1,7 +1,6 @@
-use tauri::State;
-use sqlx::SqlitePool;
+use super::service::{SearchResultDto, SmartSearchService};
 use crate::database::DatabaseManager;
-use super::service::{SmartSearchService, SearchResultDto};
+use tauri::State;
 
 #[tauri::command]
 pub async fn smart_search_command(
