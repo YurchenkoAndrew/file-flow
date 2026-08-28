@@ -7,7 +7,7 @@ use crate::features::scanner::repository::FileScannerRepository;
 use crate::features::neural_scanner::repository::NeuralScannerRepository;
 
 pub struct DatabaseManager {
-    pool: SqlitePool,
+    pub pool: SqlitePool,
 }
 
 impl DatabaseManager {

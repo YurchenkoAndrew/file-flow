@@ -43,4 +43,12 @@ export class SmartSearchService {
             throw error;
         }
     }
+
+    async getWatchedFolders(): Promise<string[]> {
+        return await invoke('get_watched_folders_command');
+    }
+
+    async removeWatchedFolder(path: string): Promise<void> {
+        await invoke('remove_watched_folder_command', {path});
+    }
 }

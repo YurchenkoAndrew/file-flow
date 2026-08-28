@@ -1,4 +1,4 @@
-import {Component, inject, signal} from '@angular/core';
+import {Component, inject, signal, OnInit} from '@angular/core'; // ДОБАВЛЕН OnInit
 import {open} from '@tauri-apps/plugin-dialog';
 import {SmartSearchService} from "../../services/smart-search.service";
 import {FormsModule} from "@angular/forms";
@@ -13,7 +13,7 @@ interface SearchResult {
     id: number;
     file_path: string;
     snippet: string;
-    score: number; // Релевантность (например, от 0.0 до 1.0)
+    score: number;
 }
 
 @Component({
@@ -37,22 +37,29 @@ interface SearchResult {
     templateUrl: './smart-search.html',
     styleUrl: './smart-search.css',
 })
-export class SmartSearch {
-    // Список выбранных папок для сканирования
+export class SmartSearch implements OnInit { // ДОБАВЛЕН implements OnInit
     scannedFolders = signal<string[]>([]);
 
-    // Поиск
     searchQuery: string = '';
     searchResults = signal<SearchResult[]>([]);
     isSearching = signal<boolean>(false);
     isScanning = signal<boolean>(false);
-    hasSearched = signal<boolean>(false); // Флаг: выполнялся ли поиск
+    hasSearched = signal<boolean>(false);
     private smartSearchService = inject(SmartSearchService);
     private searchTimer: ReturnType<typeof setTimeout> | null = null;
     scanStatus = signal<'idle' | 'success' | 'error'>('idle');
     scanMessage = signal<string>('');
 
-    // Выбор папок через Tauri Dialog с правильной типизацией
+    // ДОБАВЛЕНО: Загрузка папок при открытии компонента
+    async ngOnInit() {
+        try {
+            const folders = await this.smartSearchService.getWatchedFolders();
+            this.scannedFolders.set(folders);
+        } catch (error) {
+            console.error('Ошибка загрузки папок из базы:', error);
+        }
+    }
+
     async selectFolders() {
         try {
             const selected = await open({
@@ -64,7 +71,6 @@ export class SmartSearch {
             if (selected) {
                 const paths: string[] = Array.isArray(selected) ? selected : [selected];
 
-                // Обновляем сигнал через метод update, чтобы Angular сразу перерисовал экран
                 this.scannedFolders.update(currentFolders => {
                     const updated = [...currentFolders];
                     for (const p of paths) {
@@ -80,9 +86,20 @@ export class SmartSearch {
         }
     }
 
-    removeFolder(index: number) {
-        // Безопасно удаляем элемент из сигнала
-        this.scannedFolders.update(folders => folders.filter((_, i) => i !== index));
+    // ИЗМЕНЕНО: Теперь папка удаляется и из базы данных
+    async removeFolder(index: number) {
+        const folderToRemove = this.scannedFolders()[index];
+        if (!folderToRemove) return;
+
+        try {
+            // Удаляем из базы через бэкенд
+            await this.smartSearchService.removeWatchedFolder(folderToRemove);
+
+            // Удаляем из UI
+            this.scannedFolders.update(folders => folders.filter((_, i) => i !== index));
+        } catch (error) {
+            console.error('Ошибка при удалении папки:', error);
+        }
     }
 
     async startScanning() {
@@ -90,24 +107,20 @@ export class SmartSearch {
         if (folders.length === 0) return;
 
         this.isScanning.set(true);
-        this.scanStatus.set('idle'); // Сбрасываем статус перед новым запуском
+        this.scanStatus.set('idle');
 
         try {
             for (const folder of folders) {
                 await this.smartSearchService.startNeuralScan(folder);
             }
-            // Устанавливаем статус успеха
             this.scanStatus.set('success');
             this.scanMessage.set('Индексация успешно завершена!');
         } catch (error) {
-            // Устанавливаем статус ошибки
             this.scanStatus.set('error');
             this.scanMessage.set('Произошла ошибка при сканировании');
             console.error(error);
         } finally {
             this.isScanning.set(false);
-
-            // Прячем сообщение через 5 секунд, чтобы оно не висело вечно
             setTimeout(() => {
                 this.scanStatus.set('idle');
             }, 5000);
@@ -115,19 +128,16 @@ export class SmartSearch {
     }
 
     onSearchInput() {
-        // Очищаем предыдущий таймер, если пользователь продолжает печатать
         if (this.searchTimer) {
             clearTimeout(this.searchTimer);
         }
-
-        // Запускаем поиск через 400 мс после остановки ввода
         this.searchTimer = setTimeout(() => {
             this.onSearch().then();
         }, 400);
     }
 
     async onSearch() {
-        this.hasSearched.set(true); // Отмечаем, что поиск был запущен
+        this.hasSearched.set(true);
 
         if (!this.searchQuery.trim()) {
             this.searchResults.set([]);

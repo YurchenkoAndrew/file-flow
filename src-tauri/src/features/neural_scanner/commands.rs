@@ -34,3 +34,24 @@ pub async fn get_neural_scan_status(
         Err(e) => Err(e.to_string()),
     }
 }
+
+#[tauri::command]
+pub async fn get_watched_folders_command(
+    db: tauri::State<'_, crate::database::DatabaseManager>,
+) -> Result<Vec<String>, String> {
+    let pool = db.pool();
+    NeuralScannerRepository::get_watched_folders(pool)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn remove_watched_folder_command(
+    path: String,
+    db: tauri::State<'_, crate::database::DatabaseManager>,
+) -> Result<(), String> {
+    let pool = db.pool();
+    NeuralScannerRepository::remove_watched_folder(pool, &path)
+        .await
+        .map_err(|e| e.to_string())
+}
