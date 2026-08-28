@@ -124,13 +124,20 @@ impl NeuralScannerRepository {
         Ok(result.last_insert_rowid())
     }
 
+    /// Возвращает карту существующих файлов ТОЛЬКО для текущей сканируемой папки
     pub async fn get_existing_files_map(
         pool: &SqlitePool,
+        target_path: &str, // <-- Добавлен параметр
     ) -> Result<HashMap<String, i64>, sqlx::Error> {
-        let rows: Vec<(String, i64)> =
-            sqlx::query_as("SELECT file_path, last_modified FROM neural_documents")
-                .fetch_all(pool)
-                .await?;
+        let like_path = format!("{}%", target_path);
+
+        let rows: Vec<(String, i64)> = sqlx::query_as(
+            "SELECT file_path, last_modified FROM neural_documents WHERE file_path LIKE ?"
+        )
+            .bind(like_path) // <-- Фильтруем БД по текущей папке
+            .fetch_all(pool)
+            .await?;
+
         Ok(rows.into_iter().collect())
     }
 
@@ -191,12 +198,21 @@ impl NeuralScannerRepository {
         }
     }
 
-    /// Удаляем папку из отслеживаемых
+    /// Удаляем папку из отслеживаемых и вычищаем все её файлы из базы
     pub async fn remove_watched_folder(pool: &SqlitePool, path: &str) -> Result<(), sqlx::Error> {
+        // 1. Удаляем папку из списка отслеживаемых
         sqlx::query("DELETE FROM watched_folders WHERE folder_path = ?")
             .bind(path)
             .execute(pool)
             .await?;
+
+        // 2. Удаляем все файлы, путь которых начинается с удаляемой папки
+        let like_path = format!("{}%", path);
+        sqlx::query("DELETE FROM neural_documents WHERE file_path LIKE ?")
+            .bind(like_path)
+            .execute(pool)
+            .await?;
+
         Ok(())
     }
 }

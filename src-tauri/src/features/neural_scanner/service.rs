@@ -85,7 +85,8 @@ impl NeuralScannerService {
 
         let mut embedder = NeuralEmbedder::new(app_handle)?;
 
-        let existing_files = NeuralScannerRepository::get_existing_files_map(pool).await?;
+        // Стало: передаем target_path, чтобы не стереть чужие файлы
+        let existing_files = NeuralScannerRepository::get_existing_files_map(pool, target_path).await?;
         let mut db_paths: HashMap<String, bool> =
             existing_files.keys().map(|k| (k.clone(), false)).collect();
 

@@ -1,4 +1,4 @@
-import {Component, inject, signal, OnInit} from '@angular/core'; // ДОБАВЛЕН OnInit
+import {Component, inject, signal, OnInit} from '@angular/core';
 import {open} from '@tauri-apps/plugin-dialog';
 import {SmartSearchService} from "../../services/smart-search.service";
 import {FormsModule} from "@angular/forms";
@@ -8,12 +8,33 @@ import {MatButton, MatIconButton} from "@angular/material/button";
 import {MatDivider, MatList, MatListItem} from "@angular/material/list";
 import {MatFormField, MatInput, MatLabel} from "@angular/material/input";
 import {MatChip, MatChipSet} from "@angular/material/chips";
+import {MatDialog, MatDialogModule, MAT_DIALOG_DATA} from "@angular/material/dialog";
 
 interface SearchResult {
     id: number;
     file_path: string;
     snippet: string;
     score: number;
+}
+
+// Компонент диалогового окна для подтверждения удаления
+@Component({
+    selector: 'app-confirm-dialog',
+    imports: [MatDialogModule, MatButton],
+    template: `
+        <h2 mat-dialog-title>Подтверждение удаления</h2>
+        <mat-dialog-content>
+            Вы действительно хотите удалить папку <br><strong>{{ data.folder }}</strong><br> из отслеживаемых? <br><br>
+            Она больше не будет сканироваться, а все её проиндексированные документы будут удалены из базы поиска.
+        </mat-dialog-content>
+        <mat-dialog-actions align="end">
+            <button mat-button mat-dialog-close>Отмена</button>
+            <button mat-flat-button color="warn" [mat-dialog-close]="true">Удалить</button>
+        </mat-dialog-actions>
+    `
+})
+export class ConfirmDialogComponent {
+    data = inject(MAT_DIALOG_DATA);
 }
 
 @Component({
@@ -32,12 +53,13 @@ interface SearchResult {
         MatLabel,
         MatInput,
         MatChipSet,
-        MatChip
+        MatChip,
+        MatDialogModule // Добавлен модуль диалоговых окон
     ],
     templateUrl: './smart-search.html',
     styleUrl: './smart-search.css',
 })
-export class SmartSearch implements OnInit { // ДОБАВЛЕН implements OnInit
+export class SmartSearch implements OnInit {
     scannedFolders = signal<string[]>([]);
 
     searchQuery: string = '';
@@ -45,12 +67,14 @@ export class SmartSearch implements OnInit { // ДОБАВЛЕН implements OnIn
     isSearching = signal<boolean>(false);
     isScanning = signal<boolean>(false);
     hasSearched = signal<boolean>(false);
+
     private smartSearchService = inject(SmartSearchService);
+    private dialog = inject(MatDialog); // Инжектируем сервис диалогов
     private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
     scanStatus = signal<'idle' | 'success' | 'error'>('idle');
     scanMessage = signal<string>('');
 
-    // ДОБАВЛЕНО: Загрузка папок при открытии компонента
     async ngOnInit() {
         try {
             const folders = await this.smartSearchService.getWatchedFolders();
@@ -86,20 +110,31 @@ export class SmartSearch implements OnInit { // ДОБАВЛЕН implements OnIn
         }
     }
 
-    // ИЗМЕНЕНО: Теперь папка удаляется и из базы данных
-    async removeFolder(index: number) {
+    // Метод удаления с вызовом диалогового окна
+    removeFolder(index: number) {
         const folderToRemove = this.scannedFolders()[index];
         if (!folderToRemove) return;
 
-        try {
-            // Удаляем из базы через бэкенд
-            await this.smartSearchService.removeWatchedFolder(folderToRemove);
+        // Открываем диалоговое окно
+        const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+            data: { folder: folderToRemove },
+            width: '450px'
+        });
 
-            // Удаляем из UI
-            this.scannedFolders.update(folders => folders.filter((_, i) => i !== index));
-        } catch (error) {
-            console.error('Ошибка при удалении папки:', error);
-        }
+        // Ждем решения пользователя
+        dialogRef.afterClosed().subscribe(async (confirmed) => {
+            if (confirmed) {
+                try {
+                    // Удаляем из базы через бэкенд
+                    await this.smartSearchService.removeWatchedFolder(folderToRemove);
+
+                    // Удаляем из UI
+                    this.scannedFolders.update(folders => folders.filter((_, i) => i !== index));
+                } catch (error) {
+                    console.error('Ошибка при удалении папки:', error);
+                }
+            }
+        });
     }
 
     async startScanning() {
