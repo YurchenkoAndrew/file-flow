@@ -304,7 +304,7 @@ impl ImageOcr {
             let image = bmp.as_image().map_err(|e| e.to_string())?;
 
             // 1. Сохраняем отладку на рабочий стол (можно будет потом закомментировать)
-            let _ = image.save("C:\\Users\\Andrew\\Desktop\\debug_rendered_page.png");
+            // let _ = image.save("C:\\Users\\Andrew\\Desktop\\debug_rendered_page.png");
 
             // 2. Сохраняем во временный файл для OCR
             let temp_file = Builder::new()
