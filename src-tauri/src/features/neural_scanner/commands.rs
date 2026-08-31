@@ -1,24 +1,45 @@
 // Путь к твоему менеджеру базы данных (убедись, что он правильный)
-use super::models::NeuralScanSession;
+use super::models::{GlobalScanStatus, NeuralScanSession};
 use super::repository::NeuralScannerRepository;
 use super::service::NeuralScannerService;
 use crate::DatabaseManager;
 use tauri::{AppHandle, State};
 
 /// Команда для запуска сканирования
+/// Команда для фонового запуска всех отслеживаемых папок
 #[tauri::command]
 pub async fn start_neural_scan(
-    target_path: String,
+    folders: Vec<String>, // <-- Теперь мы принимаем папки прямо из Angular
     db: State<'_, DatabaseManager>,
-    app_handle: AppHandle, // <-- Запрашиваем дескриптор приложения у Tauri
-) -> Result<i64, String> {
-    let pool = db.pool();
+    app_handle: AppHandle,
+) -> Result<(), String> {
+    let pool = db.pool().clone();
 
-    // Передаем app_handle в сервис
-    match NeuralScannerService::run_scan(&app_handle, pool, &target_path).await {
-        Ok(session_id) => Ok(session_id),
-        Err(e) => Err(e.to_string()),
+    // Защита от двойного запуска
+    if let Ok(status) = NeuralScannerRepository::get_global_status(&pool).await {
+        if status.is_running {
+            return Err("Индексация уже запущена в фоне".into());
+        }
     }
+
+    // Отпускаем Tauri и запускаем тяжелую работу в фоне
+    tauri::async_runtime::spawn(async move {
+        // Перебираем полученные папки и запускаем скан.
+        // Внутри run_scan они автоматически добавятся в БД.
+        for folder in folders {
+            let _ = NeuralScannerService::run_scan(&app_handle, &pool, &folder).await;
+        }
+    });
+
+    Ok(())
+}
+
+/// Команда для поллинга прогресс-бара из Angular
+#[tauri::command]
+pub async fn get_neural_scan_progress(db: State<'_, DatabaseManager>) -> Result<GlobalScanStatus, String> {
+    NeuralScannerRepository::get_global_status(db.pool())
+        .await
+        .map_err(|e| e.to_string())
 }
 
 /// Команда для получения статуса сканирования (для прогресс-бара)
@@ -37,7 +58,7 @@ pub async fn get_neural_scan_status(
 
 #[tauri::command]
 pub async fn get_watched_folders_command(
-    db: tauri::State<'_, crate::database::DatabaseManager>,
+    db: State<'_, DatabaseManager>,
 ) -> Result<Vec<String>, String> {
     let pool = db.pool();
     NeuralScannerRepository::get_watched_folders(pool)
@@ -48,7 +69,7 @@ pub async fn get_watched_folders_command(
 #[tauri::command]
 pub async fn remove_watched_folder_command(
     path: String,
-    db: tauri::State<'_, crate::database::DatabaseManager>,
+    db: State<'_, DatabaseManager>,
 ) -> Result<(), String> {
     let pool = db.pool();
     NeuralScannerRepository::remove_watched_folder(pool, &path)

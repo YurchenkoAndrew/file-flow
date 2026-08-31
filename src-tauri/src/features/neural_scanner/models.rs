@@ -31,3 +31,9 @@ pub struct ExtractedDocument {
     pub text_content: String,
     pub embedding: Option<Vec<f32>>,
 }
+#[derive(serde::Serialize)]
+pub struct GlobalScanStatus {
+    pub is_running: bool,
+    pub processed: usize,
+    pub total: usize,
+}

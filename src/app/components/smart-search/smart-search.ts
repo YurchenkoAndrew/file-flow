@@ -1,4 +1,4 @@
-import {Component, inject, signal, OnInit} from '@angular/core';
+import {Component, inject, OnDestroy, OnInit, signal} from '@angular/core';
 import {open} from '@tauri-apps/plugin-dialog';
 import {SmartSearchService} from "../../services/smart-search.service";
 import {FormsModule} from "@angular/forms";
@@ -8,7 +8,8 @@ import {MatButton, MatIconButton} from "@angular/material/button";
 import {MatDivider, MatList, MatListItem} from "@angular/material/list";
 import {MatFormField, MatInput, MatLabel} from "@angular/material/input";
 import {MatChip, MatChipSet} from "@angular/material/chips";
-import {MatDialog, MatDialogModule, MAT_DIALOG_DATA} from "@angular/material/dialog";
+import {MAT_DIALOG_DATA, MatDialog, MatDialogModule} from "@angular/material/dialog";
+import {MatProgressBar} from "@angular/material/progress-bar";
 
 interface SearchResult {
     id: number;
@@ -54,12 +55,14 @@ export class ConfirmDialogComponent {
         MatInput,
         MatChipSet,
         MatChip,
-        MatDialogModule // Добавлен модуль диалоговых окон
+        MatDialogModule,
+        MatProgressBar,
+        // Добавлен модуль диалоговых окон
     ],
     templateUrl: './smart-search.html',
     styleUrl: './smart-search.css',
 })
-export class SmartSearch implements OnInit {
+export class SmartSearch implements OnInit, OnDestroy {
     scannedFolders = signal<string[]>([]);
 
     searchQuery: string = '';
@@ -71,16 +74,94 @@ export class SmartSearch implements OnInit {
     private smartSearchService = inject(SmartSearchService);
     private dialog = inject(MatDialog); // Инжектируем сервис диалогов
     private searchTimer: ReturnType<typeof setTimeout> | null = null;
+    private progressInterval: ReturnType<typeof setInterval> | null = null; // Таймер поллинга
 
     scanStatus = signal<'idle' | 'success' | 'error'>('idle');
     scanMessage = signal<string>('');
+
+    // Новые сигналы для прогресса
+    scanProgress = signal<number>(0); // Сигнал для процентов
 
     async ngOnInit() {
         try {
             const folders = await this.smartSearchService.getWatchedFolders();
             this.scannedFolders.set(folders);
+            await this.checkActiveScan(); // При заходе на страницу проверяем, не идет ли уже скан в фоне
         } catch (error) {
             console.error('Ошибка загрузки папок из базы:', error);
+        }
+    }
+
+    ngOnDestroy() {
+        if (this.progressInterval) {
+            clearInterval(this.progressInterval);
+        }
+    }
+
+    // Если скан уже идет, подхватываем его статус и блокируем интерфейс
+    async checkActiveScan() {
+        try {
+            const status = await this.smartSearchService.getNeuralScanProgress();
+            if (status.is_running) {
+                this.isScanning.set(true);
+                this.updateProgressPercent(status.processed, status.total);
+                this.startPolling();
+            }
+        } catch (e) {
+            console.error('Ошибка проверки статуса', e);
+        }
+    }
+
+    async startScanning() {
+        const folders = this.scannedFolders();
+        if (folders.length === 0) return;
+
+        this.isScanning.set(true);
+        this.scanStatus.set('idle');
+        this.scanProgress.set(0);
+
+        try {
+            // Передаем весь массив сразу. Не ждем завершения сканирования!
+            await this.smartSearchService.startNeuralScan(folders);
+            this.startPolling(); // Запускаем опрос прогресса
+        } catch (error) {
+            this.scanStatus.set('error');
+            this.scanMessage.set('Ошибка при запуске: Возможно, индексация уже идет.');
+            this.isScanning.set(false);
+            console.error(error);
+        }
+    }
+
+    startPolling() {
+        if (this.progressInterval) clearInterval(this.progressInterval);
+
+        // Раз в секунду опрашиваем бэкенд о состоянии базы данных
+        this.progressInterval = setInterval(async () => {
+            try {
+                const status = await this.smartSearchService.getNeuralScanProgress();
+
+                if (status.is_running) {
+                    this.updateProgressPercent(status.processed, status.total);
+                } else {
+                    // Индексация завершилась
+                    clearInterval(this.progressInterval!);
+                    this.isScanning.set(false);
+                    this.scanProgress.set(100);
+                    this.scanStatus.set('success');
+                    this.scanMessage.set('Индексация успешно завершена!');
+                    setTimeout(() => this.scanStatus.set('idle'), 5000);
+                }
+            } catch (e) {
+                console.error("Ошибка опроса прогресса", e);
+            }
+        }, 1000);
+    }
+
+    updateProgressPercent(processed: number, total: number) {
+        if (total === 0) {
+            this.scanProgress.set(0);
+        } else {
+            this.scanProgress.set(Math.round((processed / total) * 100));
         }
     }
 
@@ -117,7 +198,7 @@ export class SmartSearch implements OnInit {
 
         // Открываем диалоговое окно
         const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-            data: { folder: folderToRemove },
+            data: {folder: folderToRemove},
             width: '450px'
         });
 
@@ -135,31 +216,6 @@ export class SmartSearch implements OnInit {
                 }
             }
         });
-    }
-
-    async startScanning() {
-        const folders = this.scannedFolders();
-        if (folders.length === 0) return;
-
-        this.isScanning.set(true);
-        this.scanStatus.set('idle');
-
-        try {
-            for (const folder of folders) {
-                await this.smartSearchService.startNeuralScan(folder);
-            }
-            this.scanStatus.set('success');
-            this.scanMessage.set('Индексация успешно завершена!');
-        } catch (error) {
-            this.scanStatus.set('error');
-            this.scanMessage.set('Произошла ошибка при сканировании');
-            console.error(error);
-        } finally {
-            this.isScanning.set(false);
-            setTimeout(() => {
-                this.scanStatus.set('idle');
-            }, 5000);
-        }
     }
 
     onSearchInput() {

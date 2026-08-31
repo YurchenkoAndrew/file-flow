@@ -6,8 +6,8 @@ pub mod shared;
 // Импорты команд
 use crate::features::duplicates::commands::clean_duplicates_command;
 use crate::features::neural_scanner::commands::{
-    get_neural_scan_status, get_watched_folders_command, remove_watched_folder_command,
-    start_neural_scan,
+    get_neural_scan_progress, get_neural_scan_status, get_watched_folders_command,
+    remove_watched_folder_command, start_neural_scan,
 };
 use crate::features::scanner::commands::start_scan;
 use crate::features::sorter::commands::start_sorting;
@@ -158,6 +158,7 @@ pub fn run() {
             clean_duplicates_command,
             start_neural_scan,
             get_neural_scan_status,
+            get_neural_scan_progress,
             smart_search_command,
             get_watched_folders_command,
             remove_watched_folder_command

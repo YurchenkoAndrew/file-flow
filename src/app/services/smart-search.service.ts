@@ -23,15 +23,14 @@ export class SmartSearchService {
     }
 
     // Запуск нейросканирования папки (используем уже существующую бэкенд-команду)
-    async startNeuralScan(targetPath: string): Promise<number> {
-        try {
-            return await invoke<number>('start_neural_scan', {
-                targetPath: targetPath
-            });
-        } catch (error) {
-            console.error('Ошибка при запуске нейросканирования:', error);
-            throw error;
-        }
+    // Отправляем массив папок целиком
+    startNeuralScan(folders: string[]): Promise<void> {
+        return invoke('start_neural_scan', { folders });
+    }
+
+    // Запрашиваем агрегированный прогресс
+    getNeuralScanProgress(): Promise<{ is_running: boolean, processed: number, total: number }> {
+        return invoke('get_neural_scan_progress');
     }
 
     // Открытие файла / папки через shared-сервис (reveal_file_in_folder)
