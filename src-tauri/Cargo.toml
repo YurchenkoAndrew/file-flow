@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.2.0"
+version = "0.2.9"
 description = "File flow"
 authors = ["Andrew Yurchenko"]
 license-file = "license.txt"
