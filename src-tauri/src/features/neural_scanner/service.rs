@@ -11,7 +11,7 @@ use super::repository::NeuralScannerRepository;
 // Выносим константы на уровень модуля
 const MAX_FILE_SIZE: u64 = 5 * 1024 * 1024; // 5 МБ
 const VALID_EXTENSIONS: &[&str] = &[
-    "txt", "md", "csv", "json", "xml", "html", "log", "pdf", "docx", "jpg", "jpeg", "png", "heic",
+    "txt", "md", "csv", "json", "xml", "html", "htm", "log", "pdf", "docx", "doc", "xlsx", "xls", "xlsb", "ods", "jpg", "jpeg", "png", "heic",
     "tiff", "tif", "bmp", "webp",
 ];
 
@@ -53,8 +53,20 @@ impl NeuralScannerService {
                 super::ocr::ImageOcr::extract_text_from_image(&app_handle, &path)
                     .map_err(|e| e.to_string())
             } else {
-                crate::features::neural_scanner::parser::DocumentParser::extract_text(&path, &ext)
-                    .map_err(|e| e.to_string())
+                // 1. Пытаемся достать текст стандартным парсером
+                let parsed_text = crate::features::neural_scanner::parser::DocumentParser::extract_text(&path, &ext)
+                    .unwrap_or_default();
+
+                let letters_count = parsed_text.chars().filter(|c| c.is_alphabetic()).count();
+
+                // 2. ФОЛЛБЕК: Если это PDF, а текста почти нет (меньше 10 букв) — это картинка. Запускаем OCR.
+                if ext.to_lowercase() == "pdf" && letters_count < 10 {
+                    println!("🔄 PDF без текстового слоя, запускаем растеризацию и OCR: {}", path.display());
+                    crate::features::neural_scanner::ocr::ImageOcr::extract_text_from_pdf(&app_handle, &path)
+                        .map_err(|e| e.to_string())
+                } else {
+                    Ok(parsed_text)
+                }
             }
         })
             .await
@@ -158,22 +170,30 @@ impl NeuralScannerService {
                         println!(">>> НАЧАЛО ОБРАБОТКИ ФАЙЛА: {}", path_buf.display());
 
                         let ext_clone = ext.clone();
-                        let content_res = Self::extract_file_content(app_clone, path_buf, ext_clone).await;
+                        let content_res = Self::extract_file_content(app_clone, path_buf.clone(), ext_clone).await;
 
-                        if let Ok(content) = content_res {
-                            // Используем хелпер валидации текста
-                            if Self::is_text_valid(&content, &ext) {
-                                current_batch_texts.push(content.clone());
-                                current_batch_meta.push((path, mtime));
+                        match content_res {
+                            Ok(content) => {
+                                if Self::is_text_valid(&content, &ext) {
+                                    current_batch_texts.push(content.clone());
+                                    current_batch_meta.push((path, mtime));
 
-                                current_batch_docs.push(ExtractedDocument {
-                                    id: None,
-                                    session_id,
-                                    file_path: path.to_string_lossy().to_string(),
-                                    file_extension: ext.to_string(),
-                                    text_content: content,
-                                    embedding: None,
-                                });
+                                    current_batch_docs.push(ExtractedDocument {
+                                        id: None,
+                                        session_id,
+                                        file_path: path.to_string_lossy().to_string(),
+                                        file_extension: ext.to_string(),
+                                        text_content: content,
+                                        embedding: None,
+                                    });
+                                } else {
+                                    // Если текст извлекся, но его слишком мало
+                                    println!("⚠️ Файл отбракован (недостаточно текста): {}", path_buf.display());
+                                }
+                            }
+                            Err(e) => {
+                                // Вот здесь мы поймаем реальную причину сбоя Pdfium или Tesseract
+                                println!("❌ ОШИБКА обработки файла {}: {}", path_buf.display(), e);
                             }
                         }
                     }

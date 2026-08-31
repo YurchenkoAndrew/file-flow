@@ -61,7 +61,7 @@ pub async fn start_background_watcher(app_handle: AppHandle, pool: SqlitePool) -
 
         // Бесконечный цикл прослушивания
         loop {
-            // Ждем события от операционной системы (с таймаутом)
+            // Ждем события от операционной системы (с тайм-аутом)
             match notify_rx.recv_timeout(Duration::from_millis(200)) {
                 Ok(Ok(events)) => { let _ = event_tx.blocking_send(events); }
                 _ => {}
