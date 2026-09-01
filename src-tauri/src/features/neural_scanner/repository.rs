@@ -47,8 +47,16 @@ impl NeuralScannerRepository {
             );
             "#,
         )
-        .execute(pool)
-        .await?;
+            .execute(pool)
+            .await?;
+
+        // НОВЫЙ КОД: Сброс зависших сессий при старте приложения
+        // Все сессии, которые не успели завершиться из-за закрытия программы, переводим в статус Failed
+        sqlx::query(
+            "UPDATE neural_scan_sessions SET status = 'Failed', error_message = 'Прервано (перезапуск приложения)' WHERE status IN ('Pending', 'InProgress')"
+        )
+            .execute(pool)
+            .await?;
 
         Ok(())
     }
