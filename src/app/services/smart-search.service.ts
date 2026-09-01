@@ -1,5 +1,6 @@
 import {Service} from '@angular/core';
 import {invoke} from "@tauri-apps/api/core";
+import {NeuroScanStatus} from "../models/neuro-scanner.model";
 
 export interface SearchResultDto {
     id: number;
@@ -25,12 +26,12 @@ export class SmartSearchService {
     // Запуск нейросканирования папки (используем уже существующую бэкенд-команду)
     // Отправляем массив папок целиком
     startNeuralScan(folders: string[]): Promise<void> {
-        return invoke('start_neural_scan', { folders });
+        return invoke('start_neural_scan', {folders});
     }
 
     // Запрашиваем агрегированный прогресс
-    getNeuralScanProgress(): Promise<{ is_running: boolean, processed: number, total: number }> {
-        return invoke('get_neural_scan_progress');
+    getNeuralScanProgress(): Promise<NeuroScanStatus> {
+        return invoke<NeuroScanStatus>('get_neural_scan_progress');
     }
 
     // Открытие файла / папки через shared-сервис (reveal_file_in_folder)

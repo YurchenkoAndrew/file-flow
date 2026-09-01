@@ -32,8 +32,9 @@ pub struct ExtractedDocument {
     pub embedding: Option<Vec<f32>>,
 }
 #[derive(serde::Serialize)]
-pub struct GlobalScanStatus {
+pub struct NeuroScanStatus {
     pub is_running: bool,
     pub processed: usize,
     pub total: usize,
+    pub current_folder: Option<String>,
 }

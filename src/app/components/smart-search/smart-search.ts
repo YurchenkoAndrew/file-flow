@@ -10,6 +10,7 @@ import {MatFormField, MatInput, MatLabel} from "@angular/material/input";
 import {MatChip, MatChipSet} from "@angular/material/chips";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogModule} from "@angular/material/dialog";
 import {MatProgressBar} from "@angular/material/progress-bar";
+import {NeuroScanStatus} from "../../models/neuro-scanner.model";
 
 interface SearchResult {
     id: number;
@@ -76,7 +77,10 @@ export class SmartSearch implements OnInit, OnDestroy {
     private searchTimer: ReturnType<typeof setTimeout> | null = null;
     private progressInterval: ReturnType<typeof setInterval> | null = null; // Таймер поллинга
 
-    scanStatus = signal<'idle' | 'success' | 'error'>('idle');
+    neuroScanStatus = signal<'idle' | 'success' | 'error'>('idle');
+    // Это твой текущий сигнал, отвечающий за UI-состояние
+    // ДОБАВЬ этот сигнал для хранения самих данных сканирования
+    neuroScanData = signal<NeuroScanStatus | null>(null);
     scanMessage = signal<string>('');
 
     // Новые сигналы для прогресса
@@ -102,6 +106,8 @@ export class SmartSearch implements OnInit, OnDestroy {
     async checkActiveScan() {
         try {
             const status = await this.smartSearchService.getNeuralScanProgress();
+            this.neuroScanData.set(status); // <-- Записываем данные в сигнал!
+
             if (status.is_running) {
                 this.isScanning.set(true);
                 this.updateProgressPercent(status.processed, status.total);
@@ -117,7 +123,7 @@ export class SmartSearch implements OnInit, OnDestroy {
         if (folders.length === 0) return;
 
         this.isScanning.set(true);
-        this.scanStatus.set('idle');
+        this.neuroScanStatus.set('idle');
         this.scanProgress.set(0);
 
         try {
@@ -125,7 +131,7 @@ export class SmartSearch implements OnInit, OnDestroy {
             await this.smartSearchService.startNeuralScan(folders);
             this.startPolling(); // Запускаем опрос прогресса
         } catch (error) {
-            this.scanStatus.set('error');
+            this.neuroScanStatus.set('error');
             this.scanMessage.set('Ошибка при запуске: Возможно, индексация уже идет.');
             this.isScanning.set(false);
             console.error(error);
@@ -139,6 +145,7 @@ export class SmartSearch implements OnInit, OnDestroy {
         this.progressInterval = setInterval(async () => {
             try {
                 const status = await this.smartSearchService.getNeuralScanProgress();
+                this.neuroScanData.set(status); // <-- Записываем данные в сигнал!
 
                 if (status.is_running) {
                     this.updateProgressPercent(status.processed, status.total);
@@ -147,9 +154,9 @@ export class SmartSearch implements OnInit, OnDestroy {
                     clearInterval(this.progressInterval!);
                     this.isScanning.set(false);
                     this.scanProgress.set(100);
-                    this.scanStatus.set('success');
+                    this.neuroScanStatus.set('success');
                     this.scanMessage.set('Индексация успешно завершена!');
-                    setTimeout(() => this.scanStatus.set('idle'), 5000);
+                    setTimeout(() => this.neuroScanStatus.set('idle'), 5000);
                 }
             } catch (e) {
                 console.error("Ошибка опроса прогресса", e);

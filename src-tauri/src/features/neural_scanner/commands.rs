@@ -1,5 +1,4 @@
-// Путь к твоему менеджеру базы данных (убедись, что он правильный)
-use super::models::{GlobalScanStatus, NeuralScanSession};
+use super::models::{NeuroScanStatus, NeuralScanSession};
 use super::repository::NeuralScannerRepository;
 use super::service::NeuralScannerService;
 use crate::DatabaseManager;
@@ -9,23 +8,27 @@ use tauri::{AppHandle, State};
 /// Команда для фонового запуска всех отслеживаемых папок
 #[tauri::command]
 pub async fn start_neural_scan(
-    folders: Vec<String>, // <-- Теперь мы принимаем папки прямо из Angular
+    folders: Vec<String>,
     db: State<'_, DatabaseManager>,
     app_handle: AppHandle,
 ) -> Result<(), String> {
     let pool = db.pool().clone();
 
     // Защита от двойного запуска
-    if let Ok(status) = NeuralScannerRepository::get_global_status(&pool).await {
+    if let Ok(status) = NeuralScannerRepository::get_neuro_status(&pool).await {
         if status.is_running {
             return Err("Индексация уже запущена в фоне".into());
         }
     }
 
-    // Отпускаем Tauri и запускаем тяжелую работу в фоне
+    // 1. МГНОВЕННАЯ РЕГИСТРАЦИЯ: сразу добавляем все выбранные папки в базу
+    // Фронтенд получит их при следующем запросе, даже если сканирование еще не дошло до них
+    for folder in &folders {
+        let _ = NeuralScannerRepository::add_watched_folder(&pool, folder).await;
+    }
+
+    // 2. ФОНОВОЕ ВЫПОЛНЕНИЕ: отпускаем интерфейс и запускаем тяжелую работу
     tauri::async_runtime::spawn(async move {
-        // Перебираем полученные папки и запускаем скан.
-        // Внутри run_scan они автоматически добавятся в БД.
         for folder in folders {
             let _ = NeuralScannerService::run_scan(&app_handle, &pool, &folder).await;
         }
@@ -36,8 +39,10 @@ pub async fn start_neural_scan(
 
 /// Команда для поллинга прогресс-бара из Angular
 #[tauri::command]
-pub async fn get_neural_scan_progress(db: State<'_, DatabaseManager>) -> Result<GlobalScanStatus, String> {
-    NeuralScannerRepository::get_global_status(db.pool())
+pub async fn get_neural_scan_progress(
+    db: State<'_, DatabaseManager>,
+) -> Result<NeuroScanStatus, String> {
+    NeuralScannerRepository::get_neuro_status(db.pool())
         .await
         .map_err(|e| e.to_string())
 }

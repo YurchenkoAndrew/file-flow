@@ -1,4 +1,4 @@
-use super::models::{ExtractedDocument, GlobalScanStatus, NeuralScanSession, NeuralScanStatus};
+use super::models::{ExtractedDocument, NeuroScanStatus, NeuralScanSession, NeuralScanStatus};
 use sqlx::{QueryBuilder, Row, SqlitePool};
 use std::collections::HashMap;
 
@@ -47,8 +47,8 @@ impl NeuralScannerRepository {
             );
             "#,
         )
-            .execute(pool)
-            .await?;
+        .execute(pool)
+        .await?;
 
         Ok(())
     }
@@ -73,9 +73,9 @@ impl NeuralScannerRepository {
         let result = sqlx::query(
             "INSERT INTO neural_scan_sessions (target_path, status) VALUES (?, 'Pending')",
         )
-            .bind(target_path)
-            .execute(pool)
-            .await?;
+        .bind(target_path)
+        .execute(pool)
+        .await?;
         Ok(result.last_insert_rowid())
     }
 
@@ -104,7 +104,7 @@ impl NeuralScannerRepository {
                     vec_f32.len() * size_of::<f32>(),
                 )
             }
-                .to_vec()
+            .to_vec()
         });
 
         // Если файл вдруг стал валидным, удаляем его из кэша отбракованных
@@ -143,11 +143,13 @@ impl NeuralScannerRepository {
             .execute(pool)
             .await?;
 
-        sqlx::query("INSERT OR REPLACE INTO rejected_files_cache (file_path, last_modified) VALUES (?, ?)")
-            .bind(file_path)
-            .bind(last_modified)
-            .execute(pool)
-            .await?;
+        sqlx::query(
+            "INSERT OR REPLACE INTO rejected_files_cache (file_path, last_modified) VALUES (?, ?)",
+        )
+        .bind(file_path)
+        .bind(last_modified)
+        .execute(pool)
+        .await?;
 
         Ok(())
     }
@@ -160,9 +162,9 @@ impl NeuralScannerRepository {
         let rows: Vec<(String, i64)> = sqlx::query_as(
             "SELECT file_path, last_modified FROM neural_documents WHERE file_path LIKE ?",
         )
-            .bind(&like_path)
-            .fetch_all(pool)
-            .await?;
+        .bind(&like_path)
+        .fetch_all(pool)
+        .await?;
 
         Ok(rows.into_iter().collect())
     }
@@ -176,9 +178,9 @@ impl NeuralScannerRepository {
         let rows: Vec<(String, i64)> = sqlx::query_as(
             "SELECT file_path, last_modified FROM rejected_files_cache WHERE file_path LIKE ?",
         )
-            .bind(&like_path)
-            .fetch_all(pool)
-            .await?;
+        .bind(&like_path)
+        .fetch_all(pool)
+        .await?;
 
         Ok(rows.into_iter().collect())
     }
@@ -195,7 +197,9 @@ impl NeuralScannerRepository {
         let mut query_builder: QueryBuilder<sqlx::Sqlite> =
             QueryBuilder::new("DELETE FROM neural_documents WHERE file_path IN (");
         let mut separated = query_builder.separated(", ");
-        for path in paths_to_delete { separated.push_bind(path); }
+        for path in paths_to_delete {
+            separated.push_bind(path);
+        }
         separated.push_unseparated(")");
         query_builder.build().execute(pool).await?;
 
@@ -203,7 +207,9 @@ impl NeuralScannerRepository {
         let mut query_builder_rej: QueryBuilder<sqlx::Sqlite> =
             QueryBuilder::new("DELETE FROM rejected_files_cache WHERE file_path IN (");
         let mut separated_rej = query_builder_rej.separated(", ");
-        for path in paths_to_delete { separated_rej.push_bind(path); }
+        for path in paths_to_delete {
+            separated_rej.push_bind(path);
+        }
         separated_rej.push_unseparated(")");
         query_builder_rej.build().execute(pool).await?;
 
@@ -245,22 +251,32 @@ impl NeuralScannerRepository {
     }
 
     pub async fn remove_watched_folder(pool: &SqlitePool, path: &str) -> Result<(), sqlx::Error> {
-        sqlx::query("DELETE FROM watched_folders WHERE folder_path = ?").bind(path).execute(pool).await?;
+        sqlx::query("DELETE FROM watched_folders WHERE folder_path = ?")
+            .bind(path)
+            .execute(pool)
+            .await?;
 
         let like_path = format!("{}%", path);
-        sqlx::query("DELETE FROM neural_documents WHERE file_path LIKE ?").bind(&like_path).execute(pool).await?;
-        sqlx::query("DELETE FROM rejected_files_cache WHERE file_path LIKE ?").bind(&like_path).execute(pool).await?;
+        sqlx::query("DELETE FROM neural_documents WHERE file_path LIKE ?")
+            .bind(&like_path)
+            .execute(pool)
+            .await?;
+        sqlx::query("DELETE FROM rejected_files_cache WHERE file_path LIKE ?")
+            .bind(&like_path)
+            .execute(pool)
+            .await?;
 
         Ok(())
     }
 
-    pub async fn get_global_status(pool: &SqlitePool) -> Result<GlobalScanStatus, sqlx::Error> {
+    pub async fn get_neuro_status(pool: &SqlitePool) -> Result<NeuroScanStatus, sqlx::Error> {
         let row = sqlx::query(
             r#"
             SELECT
                 COUNT(id) as active_sessions,
                 COALESCE(SUM(processed_files), 0) as total_p,
-                COALESCE(SUM(total_files), 0) as total_t
+                COALESCE(SUM(total_files), 0) as total_t,
+                (SELECT target_path FROM neural_scan_sessions WHERE status = 'InProgress' ORDER BY id DESC LIMIT 1) as current_folder
             FROM neural_scan_sessions
             WHERE status IN ('Pending', 'InProgress')
             "#,
@@ -272,10 +288,14 @@ impl NeuralScannerRepository {
         let processed: i64 = row.try_get("total_p")?;
         let total: i64 = row.try_get("total_t")?;
 
-        Ok(GlobalScanStatus {
+        // Получаем путь, если он есть, иначе None
+        let current_folder: Option<String> = row.try_get("current_folder").unwrap_or(None);
+
+        Ok(NeuroScanStatus {
             is_running: count > 0,
             processed: processed as usize,
             total: total as usize,
+            current_folder,
         })
     }
 }

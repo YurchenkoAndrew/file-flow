@@ -22,13 +22,13 @@
                     </button>
 
                     <!-- Блок с уведомлением напротив кнопок -->
-                    @if (scanStatus() === 'success') {
+                    @if (neuroScanStatus() === 'success') {
                         <span class="status-message success">
                             <mat-icon inline="true">check_circle</mat-icon>
                             {{ scanMessage() }}
                         </span>
                     }
-                    @if (scanStatus() === 'error') {
+                    @if (neuroScanStatus() === 'error') {
                         <span class="status-message error">
                             <mat-icon inline="true">error</mat-icon>
                             {{ scanMessage() }}
@@ -36,9 +36,12 @@
                     }
                 </div>
 
-                <!-- Красивый прогресс-бар, который показывается только во время работы -->
+                <!-- Показываем прогресс и текущую папку, когда идет сканирование -->
                 @if (isScanning()) {
-                    <div style="margin-top: 16px; margin-bottom: 8px;">
+                    <div class="progress-bar-container" style="margin-top: 16px; margin-bottom: 8px;">
+                        <p class="text-sm text-gray-400" style="margin-bottom: 6px;">
+                            Индексируем: <strong>{{ neuroScanData()?.current_folder || 'Подготовка...' }}</strong>
+                        </p>
                         <mat-progress-bar mode="determinate" [value]="scanProgress()"></mat-progress-bar>
                         <div style="text-align: right; font-size: 12px; color: #666; margin-top: 4px;">
                             Обработано: {{ scanProgress() }}%
