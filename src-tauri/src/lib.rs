@@ -10,6 +10,7 @@ use crate::features::neural_scanner::commands::{
     remove_watched_folder_command, start_neural_scan,
 };
 use crate::features::scanner::commands::start_scan;
+use crate::features::smart_search::commands::smart_search_command;
 use crate::features::sorter::commands::start_sorting;
 use crate::shared::commands::reveal_file_in_folder;
 use database::DatabaseManager;
@@ -23,7 +24,6 @@ use tauri::{
 use tauri_plugin_autostart::ManagerExt;
 
 // Единственный сторонний плагин для автозапуска
-use crate::features::smart_search::commands::smart_search_command;
 use tauri_plugin_autostart::MacosLauncher;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -161,7 +161,7 @@ pub fn run() {
             get_neural_scan_progress,
             smart_search_command,
             get_watched_folders_command,
-            remove_watched_folder_command
+            remove_watched_folder_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
