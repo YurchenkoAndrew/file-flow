@@ -24,6 +24,7 @@ use tauri::{
 use tauri_plugin_autostart::ManagerExt;
 
 // Единственный сторонний плагин для автозапуска
+use crate::features::document_generator::commands::generate_document;
 use tauri_plugin_autostart::MacosLauncher;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -162,6 +163,7 @@ pub fn run() {
             smart_search_command,
             get_watched_folders_command,
             remove_watched_folder_command,
+            generate_document,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

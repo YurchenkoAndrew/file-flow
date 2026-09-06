@@ -1,0 +1,84 @@
+<div class="generator-layout">
+    <!-- ЛЕВАЯ ПАНЕЛЬ: Форма ввода (Angular Material) -->
+    <div class="controls-panel">
+        <h2>Создание заявления</h2>
+
+        <form [formGroup]="form" class="material-form">
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Шапка: Кому (Должность и организация)</mat-label>
+                <input matInput formControlName="recipient_role">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Шапка: Кому (ФИО)</mat-label>
+                <input matInput formControlName="recipient_name">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Шапка: От кого (Должность)</mat-label>
+                <input matInput formControlName="sender_role">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Шапка: От кого (ФИО)</mat-label>
+                <input matInput formControlName="sender_name">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Заголовок документа</mat-label>
+                <input matInput formControlName="title">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Основной текст</mat-label>
+                <textarea matInput rows="5" formControlName="body_text"></textarea>
+            </mat-form-field>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Дата</mat-label>
+                    <input matInput formControlName="date">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Расшифровка подписи</mat-label>
+                    <input matInput formControlName="signer_name">
+                </mat-form-field>
+            </div>
+
+            <button mat-flat-button color="primary" class="generate-btn"
+                    [disabled]="isGenerating() || form.invalid"
+                    (click)="onGenerate()">
+                {{ isGenerating() ? 'Сборка PDF...' : 'Сохранить PDF' }}
+            </button>
+
+        </form>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: Живое превью -->
+    <div class="preview-panel">
+        <div class="a4-sheet">
+            <div class="a4-header-container">
+                <div class="a4-header-content">
+                    <div><b>{{ form.controls.recipient_role.value }}</b></div>
+                    <div>{{ form.controls.recipient_name.value }}</div>
+                    <br>
+                    <div><b>{{ form.controls.sender_role.value }}</b></div>
+                    <div>{{ form.controls.sender_name.value }}</div>
+                </div>
+            </div>
+
+            <div class="a4-title">{{ form.controls.title.value }}</div>
+
+            <div class="a4-body">
+                {{ form.controls.body_text.value }}
+            </div>
+
+            <div class="a4-footer">
+                <div class="footer-left">{{ form.controls.date.value }}</div>
+                <div class="footer-right">_________________ / {{ form.controls.signer_name.value }} /</div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,49 @@
+<div class="generator-container">
+    <h2>Генератор документов</h2>
+
+    <form [formGroup]="form" class="generator-form">
+
+        <div class="select-templates">
+            <!-- Выпадающий список с инпутом для поиска -->
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Выберите или найдите документ</mat-label>
+                <input type="text"
+                       matInput
+                       formControlName="selectedDoc"
+                       [matAutocomplete]="auto">
+                <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn">
+                    <!-- КРИТИЧНО ВАЖНО: здесь должен быть сигнал filteredDocuments() -->
+                    @for (doc of filteredDocuments(); track doc.id) {
+                        <mat-option [value]="doc">
+                            {{ doc.name }}
+                        </mat-option>
+                    }
+                </mat-autocomplete>
+            </mat-form-field>
+        </div>
+
+        <!-- Чекбоксы выбора форматов -->
+        <div class="formats-section">
+            <span class="formats-label">Доступные форматы:</span>
+            <!-- Исправлено: привязываем форму к радиогруппе -->
+            <mat-radio-group formControlName="selectedFormat">
+                @for (format of formats; track format.id) {
+                    <mat-radio-button [value]="format.id">{{ format.name }}</mat-radio-button>
+                }
+            </mat-radio-group>
+        </div>
+    </form>
+</div>
+
+<!-- Динамическая область вывода выбранного шаблона -->
+<div class="template-outlet-container">
+    @switch (selectedDocId) {
+        @case ('application') {
+            <app-application-template [format]="form.controls.selectedFormat.value"></app-application-template>
+        }
+        @default {
+            <div class="no-template-selected">
+            </div>
+        }
+    }
+</div>

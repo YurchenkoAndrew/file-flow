@@ -15,6 +15,10 @@ export const routes: Routes = [
         loadComponent: () => import('./components/smart-search/smart-search').then(m => m.SmartSearch)
     },
     {
+        path: 'document-generator',
+        loadComponent: () => import('./components/document-generator/document-generator').then(m => m.DocumentGenerator)
+    },
+    {
         path: 'about',
         loadComponent: () => import('./components/about/about').then(m => m.About)
     },

@@ -1,0 +1,30 @@
+.generator-container {
+    padding: 0 1rem;
+}
+
+.generator-form {
+    display: flex;
+    gap: 1rem;
+    align-items: end;
+}
+
+.select-templates {
+    width: 100%;
+}
+
+.formats-section {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.formats-label {
+    font-weight: 500;
+}
+
+.mat-mdc-radio-group {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: column;
+}

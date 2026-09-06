@@ -23,9 +23,17 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src-tauri/resources/fonts",
+                "output": "/fonts"
               }
             ],
-            "styles": ["src/material-theme.scss", "src/styles.scss"]
+            "styles": [
+              "src/material-theme.scss",
+              "src/styles.scss"
+            ]
           },
           "configurations": {
             "production": {

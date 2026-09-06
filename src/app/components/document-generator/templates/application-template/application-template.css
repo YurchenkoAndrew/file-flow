@@ -1,0 +1,119 @@
+/* ==========================================================================
+   ГЛАВНЫЙ МАКЕТ ГЕНЕРАТОРА
+   ========================================================================== */
+.generator-layout {
+    display: flex;
+    flex-direction: row; /* Форма слева, превью справа */
+    gap: 2rem;
+    padding: 2rem;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+.generator-layout .controls-panel {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.generator-layout .preview-panel {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-y: auto;
+    padding-bottom: 2rem;
+}
+
+/* Медиазапрос для планшетов и узких окон */
+@media (max-width: 1100px) {
+    .generator-layout {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .generator-layout .controls-panel,
+    .generator-layout .preview-panel {
+        width: 100%;
+        flex: none;
+        overflow-y: visible;
+    }
+}
+
+/* ==========================================================================
+   КОМПОНЕНТЫ ФОРМЫ
+   ========================================================================== */
+.material-form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.form-row .half-width {
+    flex: 1;
+}
+
+.generate-btn {
+    margin-top: 0.5rem;
+    padding: 1.5rem 0;
+    font-size: 1.1rem;
+}
+
+/* ==========================================================================
+   ВИЗУАЛЬНОЕ ПРЕВЬЮ ЛИСТА А4
+   ========================================================================== */
+.a4-sheet {
+    background: white;
+    width: 100%;
+    /* Точная ширина листа А4 при 96 DPI (210мм) */
+    max-width: 794px;
+    aspect-ratio: 1 / 1.414; /* Строгие пропорции А4 */
+    padding: 30pt; /* Используем пункты вместо пикселей */
+    box-sizing: border-box;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 2px;
+
+    /* Применяем наш изолированный шрифт, чтобы совпадало с Typst */
+    font-family: 'Roboto Doc', sans-serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+}
+
+.a4-sheet .a4-header-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 2rem;
+}
+
+.a4-sheet .a4-header-content {
+    text-align: right;
+    max-width: 50%;
+    width: max-content;
+}
+
+.a4-sheet .a4-title {
+    text-align: center;
+    font-weight: bold;
+    font-size: 14pt; /* Чуть крупнее основного текста, в пунктах */
+    margin-bottom: 1.5em; /* Используем относительные отступы */
+}
+
+.a4-sheet .a4-body {
+    text-indent: 1em; /* Абзацный отступ через em */
+    margin-bottom: 2em;
+    white-space: pre-wrap; /* Сохраняет переносы строк из textarea */
+}
+
+.a4-sheet .a4-footer {
+    display: flex;
+    justify-content: space-between;
+}

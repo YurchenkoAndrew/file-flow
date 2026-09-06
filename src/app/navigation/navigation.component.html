@@ -46,6 +46,17 @@
                 <span matListItemTitle>Умный поиск</span>
             </mat-list-item>
 
+            <!-- 2. Генератор документов -->
+            <mat-list-item
+                    routerLink="/document-generator"
+                    routerLinkActive
+                    #rlaDocumentGenerator="routerLinkActive"
+                    [activated]="rlaDocumentGenerator.isActive"
+                    (click)="isHandset ? drawer.close() : null">
+                <mat-icon matListItemIcon>web</mat-icon>
+                <span matListItemTitle>Генератор документов</span>
+            </mat-list-item>
+
             <!-- 3. О программе -->
             <mat-list-item
                     routerLink="/about"
