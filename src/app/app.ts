@@ -9,7 +9,7 @@ import {UpdaterService} from "./services/updater.service";
     styleUrl: './app.css'
 })
 export class App implements OnInit {
-    protected readonly title = signal('File flow');
+    protected readonly title = signal('File Flow');
     // Внедряем сервис обновлений через Angular inject
     updater = inject(UpdaterService);
 

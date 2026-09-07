@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "File_flow",
+  "productName": "File Flow",
   "version": "0.3.1",
   "identifier": "kz.wsa",
   "build": {
@@ -35,6 +35,8 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "category": "Utility",
+    "copyright": "Copyright © 2026 Andrew Yurchenko",
     "publisher": "Andrew Yurchenko",
     "licenseFile": "license.rtf",
     "createUpdaterArtifacts": true,
