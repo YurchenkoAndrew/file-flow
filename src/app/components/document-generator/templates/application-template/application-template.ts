@@ -61,6 +61,8 @@ export class ApplicationTemplate implements OnInit {
     }
 
     ngOnInit(): void {
+        // Вычисляем динамическую дату отпуска (например, через 7 дней от сегодняшней)
+        const vacationDateText = DateHelper.getApplicationBody(7);
         // Создаем форму с непустыми значениями и nonNullable, чтобы getValue всегда возвращал строку
         this.form = this.fb.group({
             recipient_role: new FormControl(this.defaultData.recipient_role, {
@@ -80,7 +82,7 @@ export class ApplicationTemplate implements OnInit {
                 validators: [Validators.required]
             }),
             title: new FormControl(this.defaultData.title, {nonNullable: true, validators: [Validators.required]}),
-            body_text: new FormControl(this.defaultData.body_text, {
+            body_text: new FormControl(`Прошу предоставить мне ежегодный оплачиваемый отпуск с ${vacationDateText} сроком на 14 календарных дней.`, {
                 nonNullable: true,
                 validators: [Validators.required]
             }),

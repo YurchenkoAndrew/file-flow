@@ -4,6 +4,7 @@ use crate::features::document_generator::templates::application::ApplicationTemp
 use crate::shared::utils::font_utils;
 use std::path::PathBuf;
 use tauri::AppHandle;
+use crate::features::document_generator::engines::docx_engine::DocxEngine;
 
 pub struct DocumentService;
 
@@ -78,9 +79,14 @@ impl DocumentService {
                 rx.await.unwrap_or_else(|_| Err("Поток генерации PDF был аварийно завершен операционной системой".to_string()))
             },
             "docx" => {
-                // TODO: Реализовать логику сборки DOCX через соответствующий движок
-                // DocxEngine::generate_from_template(&data, &save_path)?;
-                Err("Генерация формата DOCX находится в разработке".into())
+                let target_path = PathBuf::from(&save_path);
+
+                // 1. Формируем структуру DOCX из шаблона (по аналогии с build_typst)
+                let docx_content = ApplicationTemplate::build_docx(&data);
+
+                // 2. Движок просто берет готовую структуру и пакует в файл
+                DocxEngine::generate_from_template(docx_content, &target_path)
+                    .map(|_| format!("Документ успешно сохранен: {}", save_path))
             },
             _ => {
                 Err(format!("Неподдерживаемый формат файла: {}", extension))
