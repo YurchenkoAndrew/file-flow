@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.3.0"
+version = "0.3.1"
 description = "File flow"
 authors = ["Andrew Yurchenko"]
 license-file = "license.txt"
@@ -48,3 +48,4 @@ strsim = "0.11.1"
 docx-rs = "0.4.22"
 typst = "0.15.1"
 typst-pdf = "0.15.1"
+tauri-plugin-updater = "2.11.0"

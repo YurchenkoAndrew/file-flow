@@ -12,7 +12,8 @@
             <div class="info-section">
                 <h3>О проекте</h3>
                 <p>
-                    <strong>File Flow</strong> — это современная десктопная утилита, созданная для глубокого анализа файловой системы, поиска дубликатов и наведения идеального порядка на диске.
+                    <strong>File Flow</strong> — это современная десктопная утилита, созданная для глубокого анализа
+                    файловой системы, поиска дубликатов и наведения идеального порядка на диске.
                 </p>
             </div>
 
@@ -44,21 +45,25 @@
                     <mat-list-item>
                         <mat-icon matListItemIcon class="color-primary">person</mat-icon>
                         <div matListItemTitle>Автор и разработчик: <strong>Андрей Юрченко</strong></div>
-                        <div matListItemLine>Почта для обратной связи: <a href="mailto:andrey@wsa.kz">andrew&#64;wsa.kz</a></div>
+                        <div matListItemLine>Почта для обратной связи: <a
+                                href="mailto:andrey@wsa.kz">andrew&#64;wsa.kz</a></div>
                     </mat-list-item>
                 </mat-list>
             </div>
 
             <div class="info-section">
                 <h3>Версия</h3>
-                <p class="version-text" style="margin-left: 16px;">File Flow v0.3.0</p>
+                <p class="version-text" style="margin-left: 16px;">File Flow v0.3.1</p>
+                @if (updater.updateAvailable()) {
+                    <!-- Если фоновый процесс нашел обновление, показываем кнопку прямо здесь -->
+                    <div style="margin-left: 16px; margin-top: 8px;">
+                        <button mat-flat-button color="accent" (click)="openUpdateDialog()">
+                            <mat-icon>system_update_alt</mat-icon>
+                            Доступна новая версия: {{ updater.updateVersion() }}!
+                        </button>
+                    </div>
+                }
             </div>
         </mat-card-content>
-
-        <mat-card-actions class="actions-footer">
-            <button mat-stroked-button color="primary" routerLink="/">
-                <mat-icon>arrow_back</mat-icon> На главную
-            </button>
-        </mat-card-actions>
     </mat-card>
 </div>

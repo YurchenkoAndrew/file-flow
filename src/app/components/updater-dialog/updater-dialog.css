@@ -1,0 +1,32 @@
+mat-dialog-content {
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 8px !important;
+}
+.version-info {
+    margin: 0;
+    font-size: 15px;
+}
+.status-text {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.7);
+    font-size: 13px;
+}
+.progress-container {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.percent-label {
+    align-self: flex-end;
+    font-size: 12px;
+    color: gray;
+}
+h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}

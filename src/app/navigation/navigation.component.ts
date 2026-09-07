@@ -11,6 +11,7 @@ import {RouterLink, RouterLinkActive, RouterOutlet} from "@angular/router";
 import {ThemeService} from "../services/theme.service";
 import {MatTooltip} from "@angular/material/tooltip";
 import {MatSlideToggle} from "@angular/material/slide-toggle";
+import {UpdaterService} from "../services/updater.service";
 
 @Component({
     selector: 'app-navigation',
@@ -22,6 +23,7 @@ export class NavigationComponent {
     private readonly breakpointObserver = inject(BreakpointObserver);
     // Внедряем сервис тем
     public readonly themeService = inject(ThemeService);
+    updater = inject(UpdaterService)
 
     readonly isHandset = toSignal(
         this.breakpointObserver.observe(Breakpoints.Handset).pipe(map((result) => result.matches)),

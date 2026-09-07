@@ -1,0 +1,39 @@
+<h2 mat-dialog-title>
+    <mat-icon color="primary">system_update_alt</mat-icon>
+    Доступно обновление
+</h2>
+
+<mat-dialog-content>
+    <p class="version-info">
+        Новая версия: <strong>{{ updater.updateVersion() }}</strong>
+    </p>
+
+    <p class="status-text">{{ updater.statusMessage() }}</p>
+
+    <!-- Прогресс-бар отображается только когда началась загрузка -->
+    @if (isDownloading){
+        <div class="progress-container">
+            <mat-progress-bar
+                    mode="determinate"
+                    [value]="updater.downloadProgress()">
+            </mat-progress-bar>
+            <span class="percent-label">{{ updater.downloadProgress() }}%</span>
+        </div>
+    }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <!-- Кнопка «Позже» доступна только до тех пор, пока не началась загрузка -->
+    <button mat-button mat-dialog-close [disabled]="isDownloading">
+        Позже
+    </button>
+
+    <!-- Кнопка подтверждения / скачивания -->
+    <button
+            mat-flat-button
+            color="primary"
+            (click)="startUpdate()"
+            [disabled]="isDownloading">
+        {{ isDownloading ? 'Загрузка...' : 'Обновить' }}
+    </button>
+</mat-dialog-actions>

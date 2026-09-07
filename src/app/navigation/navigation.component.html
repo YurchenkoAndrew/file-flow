@@ -65,7 +65,12 @@
                     [activated]="rlaAbout.isActive"
                     (click)="isHandset ? drawer.close() : null">
                 <mat-icon matListItemIcon>info</mat-icon>
-                <span matListItemTitle>О программе</span>
+                <span matListItemTitle class="menu-item-title">
+                    <span>О программе</span>
+                    @if (updater.updateAvailable()) {
+                        <mat-icon class="app-primary-color">system_update_alt</mat-icon>
+                    }
+                </span>
             </mat-list-item>
         </mat-nav-list>
     </mat-sidenav>
