@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
+        <!-- 1. Твоя папка (оставлена без RemoveFile, чтобы спасти базу при апдейте) -->
         <DirectoryRef Id="TARGETDIR">
             <Directory Id="AppDataFolder" Name="AppData">
                 <Directory Id="AppVendorFolder" Name="kz.wsa">
                     <Directory Id="AppSpecificFolder" Name="file-flow">
 
-                        <Component Id="CleanupAppDataFolder" Guid="12345678-1234-1234-1234-1234567890AB">
-                            <!-- Обязательный ключ реестра для HKCU -->
+                        <Component Id="CleanupAppDataFolder" Guid="8706ECC1-29D5-41A1-8ED7-5C51E29DD745">
                             <RegistryValue Root="HKCU" Key="Software\kz.wsa\file-flow" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
 
-                            <!-- Удаляем базу данных -->
-                            <RemoveFile Id="RemoveDbFile" Name="file_flow.db" On="uninstall" />
-
-                            <!-- Удаляем сами папки. Обрати внимание на атрибут Directory у второй команды! -->
+                            <!-- Эти теги обязательны для компилятора. Они удаляют только пустые папки -->
                             <RemoveFolder Id="RemoveAppSpecificFolder" On="uninstall" />
                             <RemoveFolder Id="RemoveAppVendorFolder" Directory="AppVendorFolder" On="uninstall" />
                         </Component>
@@ -22,5 +19,34 @@
                 </Directory>
             </Directory>
         </DirectoryRef>
+
+        <!-- 2. Скрипт с диалоговым окном (VBScript) -->
+        <CustomAction Id="AskAndWipeData" Script="vbscript" Execute="immediate" Return="ignore">
+            <![CDATA[
+            Dim ans, appData, folderPath, fso
+
+            ' Берем правильный путь к AppData
+            appData = Session.Property("AppDataFolder")
+            folderPath = appData & "kz.wsa\file-flow"
+
+            ' Показываем окно. Код 4388 = Да/Нет + Иконка вопроса + Кнопка "Нет" по умолчанию + Поверх всех окон
+            ans = MsgBox("Удалить базу данных и все настройки программы File Flow?", 4388, "Удаление File Flow")
+
+            ' Если пользователь нажал "Да" (код 6)
+            If ans = 6 Then
+                Set fso = CreateObject("Scripting.FileSystemObject")
+                If fso.FolderExists(folderPath) Then
+                    fso.DeleteFolder folderPath, True
+                End If
+            End If
+            ]]>
+        </CustomAction>
+
+        <!-- 3. Запускаем окно ТОЛЬКО при полном удалении программы руками пользователя -->
+        <InstallExecuteSequence>
+            <Custom Action="AskAndWipeData" Before="RemoveFiles">
+                (REMOVE="ALL") AND (NOT UPGRADINGPRODUCTCODE)
+            </Custom>
+        </InstallExecuteSequence>
     </Fragment>
 </Wix>

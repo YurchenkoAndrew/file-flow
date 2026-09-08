@@ -41,10 +41,13 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cmd| {
-            // Здесь можно отловить момент, когда кто-то попытался запустить вторую копию,
-            // и, например, сфокусировать существующее окно:
+            // Ищем главное окно по его ID (обычно "main")
             if let Some(window) = app.get_webview_window("main") {
+                // Если окно было скрыто в трей — показываем его
+                let _ = window.show();
+                // Если оно было свернуто на панель задач — разворачиваем
                 let _ = window.unminimize();
+                // Выводим поверх остальных окон и даем фокус ввода
                 let _ = window.set_focus();
             }
         }))
