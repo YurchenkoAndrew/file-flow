@@ -29,4 +29,15 @@ pub struct ApplicationTemplateData {
     pub signer_name: String, // Расшифровка подписи
 }
 
-// Позже сюда же добавим структуры для MemoData (Служебная записка) и AgreementData (Акт).
+#[derive(Deserialize)]
+pub struct MemoTemplateData {
+    pub recipient_role: String,
+    pub recipient_name: String,
+    pub sender_department: Option<String>, // Опционально, так как может быть пустым
+    pub sender_role: String,
+    pub sender_name: String,
+    pub subject: Option<String>, // Опционально
+    pub body_text: String,
+    pub date: String,
+    pub signer_name: String,
+}

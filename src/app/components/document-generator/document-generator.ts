@@ -6,6 +6,7 @@ import {MatAutocomplete, MatAutocompleteTrigger, MatOption} from "@angular/mater
 import {MatRadioButton, MatRadioGroup} from "@angular/material/radio";
 import {ApplicationTemplate} from "./templates/application-template/application-template";
 import {toSignal} from "@angular/core/rxjs-interop";
+import {MemoTemplate} from "./templates/memo-template/memo-template";
 
 interface DocumentType {
     id: string;
@@ -25,7 +26,8 @@ interface DocumentType {
         MatAutocompleteTrigger,
         MatRadioGroup,
         MatRadioButton,
-        ApplicationTemplate
+        ApplicationTemplate,
+        MemoTemplate
     ],
     templateUrl: './document-generator.html',
     styleUrl: './document-generator.css',

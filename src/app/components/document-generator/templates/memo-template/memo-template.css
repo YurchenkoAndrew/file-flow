@@ -3,7 +3,7 @@
    ========================================================================== */
 .generator-layout {
     display: flex;
-    flex-direction: row; /* Форма слева, превью справа */
+    flex-direction: row;
     gap: 2rem;
     padding: 2rem;
     height: 100vh;
@@ -22,7 +22,6 @@
     align-items: flex-start;
     overflow-y: auto;
     padding-bottom: 2rem;
-    /* Убираем жесткий цвет, оставляем только толщину и стиль */
     border-style: solid;
     border-width: 1px;
     border-radius: 4px;
@@ -75,7 +74,6 @@
    ВИЗУАЛЬНОЕ ПРЕВЬЮ ЛИСТА А4
    ========================================================================== */
 .a4-sheet {
-    /* Убраны background, color и box-shadow для поддержки темной/светлой темы */
     width: 100%;
     /* Точная ширина листа А4 при 96 DPI (210мм) */
     max-width: 794px;
@@ -86,7 +84,6 @@
     border-radius: 2px;
     text-align: justify;
 
-    /* Применяем наш изолированный шрифт, чтобы совпадало с Typst */
     font-family: 'Roboto Doc', sans-serif;
     font-size: 12pt;
     line-height: 1.5;
@@ -107,14 +104,18 @@
 .a4-sheet .a4-title {
     text-align: center;
     font-weight: bold;
-    font-size: 14pt; /* Чуть крупнее основного текста, в пунктах */
-    margin-bottom: 1.5em; /* Используем относительные отступы */
+    font-size: 14pt;
+    margin-bottom: 1.5em;
+}
+
+.a4-sheet .a4-subject {
+    margin-bottom: 1.5em;
 }
 
 .a4-sheet .a4-body {
-    text-indent: 1em; /* Абзацный отступ через em */
+    text-indent: 1em;
     margin-bottom: 2em;
-    white-space: pre-wrap; /* Сохраняет переносы строк из textarea */
+    white-space: pre-wrap;
 }
 
 .a4-sheet .a4-footer {
