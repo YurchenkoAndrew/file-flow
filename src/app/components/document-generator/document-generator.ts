@@ -7,6 +7,7 @@ import {MatRadioButton, MatRadioGroup} from "@angular/material/radio";
 import {ApplicationTemplate} from "./templates/application-template/application-template";
 import {toSignal} from "@angular/core/rxjs-interop";
 import {MemoTemplate} from "./templates/memo-template/memo-template";
+import {AgreementTemplate} from "./templates/agreement-template/agreement-template";
 
 interface DocumentType {
     id: string;
@@ -27,7 +28,8 @@ interface DocumentType {
         MatRadioGroup,
         MatRadioButton,
         ApplicationTemplate,
-        MemoTemplate
+        MemoTemplate,
+        AgreementTemplate
     ],
     templateUrl: './document-generator.html',
     styleUrl: './document-generator.css',

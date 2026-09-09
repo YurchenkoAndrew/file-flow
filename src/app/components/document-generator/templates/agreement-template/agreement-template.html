@@ -1,0 +1,255 @@
+<div class="generator-layout">
+    <!-- ЛЕВАЯ ПАНЕЛЬ: Форма ввода -->
+    <div class="controls-panel">
+        <h2>Договор подряда / услуг</h2>
+
+        <form [formGroup]="form" class="material-form">
+            <h3>Общие данные</h3>
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Номер договора</mat-label>
+                    <input matInput formControlName="agreement_number">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Город</mat-label>
+                    <input matInput formControlName="city">
+                </mat-form-field>
+            </div>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Дата</mat-label>
+                <input matInput formControlName="date">
+            </mat-form-field>
+
+            <!-- Секция Заказчика -->
+            <h3>Заказчик</h3>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Наименование (ТОО, АО, ИП)</mat-label>
+                <input matInput formControlName="customer_name">
+            </mat-form-field>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Должность (Им. пад.)</mat-label>
+                    <input matInput formControlName="customer_position">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>ФИО подписанта (Им. пад.)</mat-label>
+                    <input matInput formControlName="customer_signatory_name">
+                </mat-form-field>
+            </div>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>В лице (Род. пад.)</mat-label>
+                    <input matInput formControlName="customer_genitive">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Действует на основании</mat-label>
+                    <input matInput formControlName="customer_basis" placeholder="Устава / доверенности">
+                </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Юридический адрес</mat-label>
+                <input matInput formControlName="customer_address">
+            </mat-form-field>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>БИН / ИИН</mat-label>
+                    <input matInput formControlName="customer_iin_bin">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>БИК банка</mat-label>
+                    <input matInput formControlName="customer_bik">
+                </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Банк Заказчика</mat-label>
+                <input matInput formControlName="customer_bank">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>ИИК (Расчетный счет)</mat-label>
+                <input matInput formControlName="customer_iik">
+            </mat-form-field>
+
+            <!-- Секция Подрядчика -->
+            <h3>Подрядчик / Исполнитель</h3>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Наименование (ТОО, АО, ИП)</mat-label>
+                <input matInput formControlName="contractor_name">
+            </mat-form-field>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Должность / Статус (Им. пад.)</mat-label>
+                    <input matInput formControlName="contractor_position">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>ФИО подписанта (Им. пад.)</mat-label>
+                    <input matInput formControlName="contractor_signatory_name">
+                </mat-form-field>
+            </div>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>В лице / Действует (Род. пад.)</mat-label>
+                    <input matInput formControlName="contractor_genitive">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Действует на основании</mat-label>
+                    <input matInput formControlName="contractor_basis" placeholder="Устава / свидетельства ИП">
+                </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Доп. инфо о регистрации (№, дата - если есть)</mat-label>
+                <input matInput formControlName="contractor_reg_info" placeholder="№ 0009842 от 14.03.2018 г. (необязательно)">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Юридический адрес</mat-label>
+                <input matInput formControlName="contractor_address">
+            </mat-form-field>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>ИИН / БИН</mat-label>
+                    <input matInput formControlName="contractor_iin_bin">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>КБе</mat-label>
+                    <input matInput formControlName="contractor_kbe">
+                </mat-form-field>
+            </div>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Банк Подрядчика</mat-label>
+                    <input matInput formControlName="contractor_bank">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>БИК банка</mat-label>
+                    <input matInput formControlName="contractor_bik">
+                </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>ИИК (Расчетный счет)</mat-label>
+                <input matInput formControlName="contractor_iik">
+            </mat-form-field>
+
+            <h3>Преамбула и содержание</h3>
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Заключительная фраза преамбулы</mat-label>
+                <input matInput formControlName="preamble_closing">
+            </mat-form-field>
+
+            <quill-editor
+                    formControlName="body_text"
+                    [modules]="quillModules"
+                    format="html"
+                    placeholder="Введите пункты договора...">
+            </quill-editor>
+
+            <button mat-flat-button color="primary" class="generate-btn"
+                    [disabled]="isGenerating() || form.invalid"
+                    (click)="onGenerate()">
+                {{ isGenerating() ? 'Сборка...' : 'Сохранить договор' }}
+            </button>
+        </form>
+    </div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: Превью страниц -->
+    <div class="preview-container-wrapper">
+        <mat-tab-group class="preview-tabs" animationDuration="0ms">
+            @for (page of pages(); track page.pageNumber) {
+                <mat-tab [label]="'Стр. ' + page.pageNumber">
+                    <div class="preview-panel">
+                        <div class="a4-sheet">
+
+                            @if (page.showHeader) {
+                                <div class="a4-header-row">
+                                    <span>{{ form.controls.city.value }}</span>
+                                    <span>{{ form.controls.date.value }}</span>
+                                </div>
+                                <div class="a4-title">ДОГОВОР № {{ form.controls.agreement_number.value }}</div>
+                                <div class="a4-body">
+                                    <p>
+                                        <b>{{ form.controls.customer_name.value }}</b>, в лице {{ form.controls.customer_genitive.value }}, действующего на основании {{ form.controls.customer_basis.value }}, с одной стороны, и
+                                        <b>{{ form.controls.contractor_name.value }}</b>, в лице {{ form.controls.contractor_genitive.value }}, действующего на основании {{ form.controls.contractor_basis.value }}@if (form.controls.contractor_reg_info.value) { {{ form.controls.contractor_reg_info.value }} }, с другой стороны, {{ form.controls.preamble_closing.value }}
+                                    </p>
+                                </div>
+                            }
+
+                            <!-- Динамический вывод HTML-абзацев текущей страницы -->
+                            <div class="a4-body">
+                                @for (block of page.paragraphs; track $index) {
+                                    <div class="ql-editor-preview" [innerHTML]="block | safeHtml"></div>
+                                }
+                            </div>
+
+                            <!-- Блок реквизитов -->
+                            @if (page.showSignatures) {
+                                <div class="a4-body signatures-section-title">
+                                    <p><b>ЮРИДИЧЕСКИЕ АДРЕСА И РЕКВИЗИТЫ СТОРОН</b></p>
+                                </div>
+
+                                <div class="requisites-container">
+                                    <!-- РЯД 1: Банковские реквизиты и адреса -->
+                                    <div class="requisites-row">
+                                        <div class="requisites-col">
+                                            <p><b>Заказчик:</b></p>
+                                            <p><b>{{ form.controls.customer_name.value }}</b></p>
+                                            <p>Адрес: {{ form.controls.customer_address.value }}</p>
+                                            <p>БИН: {{ form.controls.customer_iin_bin.value }}</p>
+                                            <p>ИИК: {{ form.controls.customer_iik.value }}</p>
+                                            <p>{{ form.controls.customer_bank.value }}</p>
+                                            <p>БИК: {{ form.controls.customer_bik.value }}</p>
+                                        </div>
+
+                                        <div class="requisites-col">
+                                            <p><b>Подрядчик:</b></p>
+                                            <p><b>{{ form.controls.contractor_name.value }}</b></p>
+                                            <p>Адрес: {{ form.controls.contractor_address.value }}</p>
+                                            <p>ИИН: {{ form.controls.contractor_iin_bin.value }}</p>
+                                            @if (form.controls.contractor_kbe.value) {
+                                                <p>КБе: {{ form.controls.contractor_kbe.value }}</p>
+                                            }
+                                            <p>ИИК: {{ form.controls.contractor_iik.value }}</p>
+                                            <p>{{ form.controls.contractor_bank.value }}</p>
+                                            <p>БИК: {{ form.controls.contractor_bik.value }}</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- РЯД 2: Подписи -->
+                                    <div class="signatures-row">
+                                        <div class="signature-col">
+                                            <p class="signatory-position">{{ form.controls.customer_position.value }}</p>
+                                            <div class="signature-line">
+                                                <span>М.П. ___________________</span>
+                                                <span>/ {{ form.controls.customer_signatory_name.value }} /</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="signature-col">
+                                            <p class="signatory-position">{{ form.controls.contractor_position.value }}</p>
+                                            <div class="signature-line">
+                                                <span>М.П. ___________________</span>
+                                                <span>/ {{ form.controls.contractor_signatory_name.value }} /</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="page-number-footer">— {{ page.pageNumber }} —</div>
+                        </div>
+                    </div>
+                </mat-tab>
+            }
+        </mat-tab-group>
+    </div>
+</div>

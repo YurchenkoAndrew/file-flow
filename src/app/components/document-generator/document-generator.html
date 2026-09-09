@@ -44,6 +44,9 @@
         @case ('memo') {
             <app-memo-template [format]="form.controls.selectedFormat.value"></app-memo-template>
         }
+        @case ('agreement') {
+            <app-agreement-template [format]="form.controls.selectedFormat.value"></app-agreement-template>
+        }
         @default {
             <div class="no-template-selected">
             </div>

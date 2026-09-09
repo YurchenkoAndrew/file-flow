@@ -1,0 +1,302 @@
+.generator-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    padding: 1.5rem;
+    height: 100vh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.generator-layout .controls-panel {
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.preview-container-wrapper {
+    flex: 1.1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.preview-tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+::ng-deep .mat-mdc-tab-group .mat-mdc-tab-body-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+::ng-deep .mat-mdc-tab-body {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+::ng-deep .mat-mdc-tab-body-content {
+    flex: 1 1 auto;
+    height: 100% !important;
+    min-height: 0;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-panel {
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 4px;
+}
+
+@media (max-width: 1100px) {
+    .generator-layout {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+    }
+
+    .generator-layout .controls-panel,
+    .preview-container-wrapper {
+        width: 100%;
+        flex: none;
+        overflow-y: visible;
+    }
+}
+
+.material-form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+}
+
+.material-form h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.form-row .half-width {
+    flex: 1;
+}
+
+.generate-btn {
+    margin-top: 1.5rem;
+    padding: 1.5rem 0;
+    font-size: 1.1rem;
+}
+
+/* Лист А4 */
+.a4-sheet {
+    width: 100%;
+    max-width: 794px;
+    min-height: 1123px;
+    margin: 0 auto 2rem auto;
+    padding: 35pt;
+    box-sizing: border-box;
+    border-radius: 2px;
+    text-align: justify;
+    font-family: 'Roboto Doc', sans-serif;
+    font-size: 11pt;
+    line-height: 1.4;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.a4-header-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    font-size: 10pt;
+}
+
+.a4-title {
+    text-align: center;
+    font-weight: bold;
+    font-size: 13pt;
+    margin-bottom: 1.5rem;
+}
+
+.a4-body p {
+    margin-bottom: 0.6rem;
+    text-indent: 1em;
+    white-space: pre-wrap;
+}
+
+/* Рендер форматированного HTML из Quill */
+/* Базовый рендер блоков из Quill в превью */
+.ql-editor-preview {
+    font-size: 11pt;
+    line-height: 1.4;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.ql-editor-preview p {
+    margin: 0 0 0.5rem 0;
+    text-indent: 1.25em; /* Красная строка только у обычных абзацев */
+    white-space: normal;
+}
+
+.ql-editor-preview p:has(br) {
+    min-height: 1.4em;
+}
+
+/* Заголовки из редактора */
+.ql-editor-preview h1,
+.ql-editor-preview h2,
+.ql-editor-preview h3 {
+    margin: 0.8rem 0 0.4rem 0;
+    text-indent: 0;
+    font-weight: bold;
+}
+
+.ql-editor-preview h1 {
+    font-size: 13pt;
+}
+
+.ql-editor-preview h2 {
+    font-size: 12pt;
+}
+
+.ql-editor-preview h3 {
+    font-size: 11pt;
+}
+
+/* Оформление нумерованных и маркированных списков под печать */
+.ql-editor-preview ol,
+.ql-editor-preview ul,
+.preview-list {
+    margin: 0 0 0.5rem 0;
+    padding-left: 2rem; /* Аккуратный отступ слева, не распирающий лист */
+    box-sizing: border-box;
+}
+
+.ql-editor-preview li {
+    margin-bottom: 0.3rem;
+    text-indent: 0; /* Убираем красную строку у пунктов списка */
+    padding-left: 0.3rem;
+    line-height: 1.4;
+}
+
+/* Поддержка многоуровневых вложенных списков Quill */
+.ql-editor-preview li[data-list="ordered"] {
+    list-style-type: decimal;
+}
+
+.ql-editor-preview li[data-list="bullet"] {
+    list-style-type: disc;
+}
+
+/* Секция реквизитов и подписей */
+.signatures-section-title {
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+    text-align: center;
+}
+
+.signatures-section-title p {
+    text-indent: 0;
+}
+
+.requisites-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    font-size: 9.5pt;
+    line-height: 1.35;
+}
+
+/* Ряд 1: Банковские реквизиты */
+.requisites-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 2.5rem;
+}
+
+.requisites-col {
+    flex: 1;
+}
+
+.requisites-col p {
+    margin: 0 0 0.25rem 0;
+    text-indent: 0;
+}
+
+/* Ряд 2: Подписи сторон */
+.signatures-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 2.5rem;
+    padding-top: 0.5rem;
+}
+
+.signature-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.signatory-position {
+    margin: 0 0 3rem 0;
+    text-indent: 0;
+    min-height: 1.2em;
+}
+
+.signature-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.signature-line span {
+    text-indent: 0;
+}
+
+/* Подвал страницы */
+.page-number-footer {
+    position: absolute;
+    bottom: 15pt;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9pt;
+}
