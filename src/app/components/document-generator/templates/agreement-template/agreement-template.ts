@@ -8,36 +8,39 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { debounceTime } from 'rxjs';
 import { QuillEditorComponent } from 'ngx-quill';
 import { SafeHtmlPipe } from '../../../../pipes/safe-html-pipe';
+import {MatOption, MatSelect} from "@angular/material/select";
 
 export interface AgreementTemplateData {
     agreement_number: string;
     city: string;
     date: string;
 
-    // Заказчик
-    customer_type: 'too' | 'ao' | 'ip' | 'person';
+    // Заказчик / Сторона 1
     customer_name: string;
     customer_position: string;
     customer_signatory_name: string;
     customer_genitive: string;
     customer_basis: string;
+    customer_reg_info: string;         // Доп. инфо (номер, дата) - опционально
     customer_address: string;
+    customer_id_type: 'БИН' | 'ИИН';   // Выбор БИН или ИИН
     customer_iin_bin: string;
+    customer_kbe: string;              // Опционально
     customer_iik: string;
     customer_bank: string;
     customer_bik: string;
 
-    // Подрядчик / Исполнитель
-    contractor_type: 'too' | 'ao' | 'ip' | 'person';
+    // Подрядчик / Сторона 2
     contractor_name: string;
     contractor_position: string;
     contractor_signatory_name: string;
     contractor_genitive: string;
     contractor_basis: string;
-    contractor_reg_info: string;
+    contractor_reg_info: string;       // Доп. инфо (номер, дата) - опционально
     contractor_address: string;
+    contractor_id_type: 'БИН' | 'ИИН'; // Выбор БИН или ИИН
     contractor_iin_bin: string;
-    contractor_kbe: string;
+    contractor_kbe: string;            // Опционально
     contractor_iik: string;
     contractor_bank: string;
     contractor_bik: string;
@@ -51,19 +54,20 @@ export interface AgreementFormModel {
     city: FormControl<string>;
     date: FormControl<string>;
 
-    customer_type: FormControl<'too' | 'ao' | 'ip' | 'person'>;
     customer_name: FormControl<string>;
     customer_position: FormControl<string>;
     customer_signatory_name: FormControl<string>;
     customer_genitive: FormControl<string>;
     customer_basis: FormControl<string>;
+    customer_reg_info: FormControl<string>;
     customer_address: FormControl<string>;
+    customer_id_type: FormControl<'БИН' | 'ИИН'>;
     customer_iin_bin: FormControl<string>;
+    customer_kbe: FormControl<string>;
     customer_iik: FormControl<string>;
     customer_bank: FormControl<string>;
     customer_bik: FormControl<string>;
 
-    contractor_type: FormControl<'too' | 'ao' | 'ip' | 'person'>;
     contractor_name: FormControl<string>;
     contractor_position: FormControl<string>;
     contractor_signatory_name: FormControl<string>;
@@ -71,6 +75,7 @@ export interface AgreementFormModel {
     contractor_basis: FormControl<string>;
     contractor_reg_info: FormControl<string>;
     contractor_address: FormControl<string>;
+    contractor_id_type: FormControl<'БИН' | 'ИИН'>;
     contractor_iin_bin: FormControl<string>;
     contractor_kbe: FormControl<string>;
     contractor_iik: FormControl<string>;
@@ -99,6 +104,8 @@ export interface PreviewPage {
         MatTabsModule,
         QuillEditorComponent,
         SafeHtmlPipe,
+        MatSelect,
+        MatOption,
     ],
     templateUrl: './agreement-template.html',
     styleUrl: './agreement-template.css',
@@ -127,21 +134,22 @@ export class AgreementTemplate implements OnInit {
         city: 'г. Алматы',
         date: DateHelper.today(),
 
-        // Заказчик (ТОО)
-        customer_type: 'too',
+        // Заказчик
         customer_name: 'ТОО «Nova Development»',
         customer_position: 'Генеральный директор',
         customer_signatory_name: 'Ахметов Б.С.',
         customer_genitive: 'генерального директора Ахметова Б.С.',
         customer_basis: 'Устава',
+        customer_reg_info: '',
         customer_address: 'г. Алматы, пр. Абая, д. 52, офис 301',
+        customer_id_type: 'БИН',
         customer_iin_bin: '180440025910',
+        customer_kbe: '17',
         customer_iik: 'KZ459260100192837465',
         customer_bank: 'АГФ АО «Банк ЦентрКредит»',
         customer_bik: 'KCJBKZKX',
 
-        // Подрядчик (ИП)
-        contractor_type: 'ip',
+        // Подрядчик
         contractor_name: 'ИП «Смирнов Д.А.»',
         contractor_position: 'Индивидуальный предприниматель',
         contractor_signatory_name: 'Смирнов Д.А.',
@@ -149,6 +157,7 @@ export class AgreementTemplate implements OnInit {
         contractor_basis: 'свидетельства о государственной регистрации',
         contractor_reg_info: '№ 0009842 от 14.03.2018 г.',
         contractor_address: 'г. Алматы, ул. Толе би, д. 140, кв. 25',
+        contractor_id_type: 'ИИН',
         contractor_iin_bin: '850315302194',
         contractor_kbe: '19',
         contractor_iik: 'KZ82722C000021345678',
@@ -166,123 +175,42 @@ export class AgreementTemplate implements OnInit {
 
     ngOnInit(): void {
         this.form = this.fb.group<AgreementFormModel>({
-            agreement_number: new FormControl(this.defaultData.agreement_number, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            city: new FormControl(this.defaultData.city, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            date: new FormControl(this.defaultData.date, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
+            agreement_number: new FormControl(this.defaultData.agreement_number, { nonNullable: true, validators: [Validators.required] }),
+            city: new FormControl(this.defaultData.city, { nonNullable: true, validators: [Validators.required] }),
+            date: new FormControl(this.defaultData.date, { nonNullable: true, validators: [Validators.required] }),
 
-            customer_type: new FormControl(this.defaultData.customer_type, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            customer_name: new FormControl(this.defaultData.customer_name, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            customer_position: new FormControl(this.defaultData.customer_position, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            customer_signatory_name: new FormControl(this.defaultData.customer_signatory_name, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            customer_genitive: new FormControl(this.defaultData.customer_genitive, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            customer_basis: new FormControl(this.defaultData.customer_basis, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            customer_address: new FormControl(this.defaultData.customer_address, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            customer_iin_bin: new FormControl(this.defaultData.customer_iin_bin, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            customer_iik: new FormControl(this.defaultData.customer_iik, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            customer_bank: new FormControl(this.defaultData.customer_bank, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            customer_bik: new FormControl(this.defaultData.customer_bik, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
+            // Заказчик
+            customer_name: new FormControl(this.defaultData.customer_name, { nonNullable: true, validators: [Validators.required] }),
+            customer_position: new FormControl(this.defaultData.customer_position, { nonNullable: true, validators: [Validators.required] }),
+            customer_signatory_name: new FormControl(this.defaultData.customer_signatory_name, { nonNullable: true, validators: [Validators.required] }),
+            customer_genitive: new FormControl(this.defaultData.customer_genitive, { nonNullable: true, validators: [Validators.required] }),
+            customer_basis: new FormControl(this.defaultData.customer_basis, { nonNullable: true, validators: [Validators.required] }),
+            customer_reg_info: new FormControl(this.defaultData.customer_reg_info, { nonNullable: true }),
+            customer_address: new FormControl(this.defaultData.customer_address, { nonNullable: true, validators: [Validators.required] }),
+            customer_id_type: new FormControl(this.defaultData.customer_id_type, { nonNullable: true, validators: [Validators.required] }),
+            customer_iin_bin: new FormControl(this.defaultData.customer_iin_bin, { nonNullable: true, validators: [Validators.required] }),
+            customer_kbe: new FormControl(this.defaultData.customer_kbe, { nonNullable: true }),
+            customer_iik: new FormControl(this.defaultData.customer_iik, { nonNullable: true, validators: [Validators.required] }),
+            customer_bank: new FormControl(this.defaultData.customer_bank, { nonNullable: true, validators: [Validators.required] }),
+            customer_bik: new FormControl(this.defaultData.customer_bik, { nonNullable: true, validators: [Validators.required] }),
 
-            contractor_type: new FormControl(this.defaultData.contractor_type, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            contractor_name: new FormControl(this.defaultData.contractor_name, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            contractor_position: new FormControl(this.defaultData.contractor_position, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            contractor_signatory_name: new FormControl(this.defaultData.contractor_signatory_name, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            contractor_genitive: new FormControl(this.defaultData.contractor_genitive, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            contractor_basis: new FormControl(this.defaultData.contractor_basis, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            contractor_reg_info: new FormControl(this.defaultData.contractor_reg_info, {
-                nonNullable: true
-            }),
-            contractor_address: new FormControl(this.defaultData.contractor_address, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            contractor_iin_bin: new FormControl(this.defaultData.contractor_iin_bin, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            contractor_kbe: new FormControl(this.defaultData.contractor_kbe, {
-                nonNullable: true
-            }),
-            contractor_iik: new FormControl(this.defaultData.contractor_iik, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            contractor_bank: new FormControl(this.defaultData.contractor_bank, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            contractor_bik: new FormControl(this.defaultData.contractor_bik, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
+            // Подрядчик
+            contractor_name: new FormControl(this.defaultData.contractor_name, { nonNullable: true, validators: [Validators.required] }),
+            contractor_position: new FormControl(this.defaultData.contractor_position, { nonNullable: true, validators: [Validators.required] }),
+            contractor_signatory_name: new FormControl(this.defaultData.contractor_signatory_name, { nonNullable: true, validators: [Validators.required] }),
+            contractor_genitive: new FormControl(this.defaultData.contractor_genitive, { nonNullable: true, validators: [Validators.required] }),
+            contractor_basis: new FormControl(this.defaultData.contractor_basis, { nonNullable: true, validators: [Validators.required] }),
+            contractor_reg_info: new FormControl(this.defaultData.contractor_reg_info, { nonNullable: true }),
+            contractor_address: new FormControl(this.defaultData.contractor_address, { nonNullable: true, validators: [Validators.required] }),
+            contractor_id_type: new FormControl(this.defaultData.contractor_id_type, { nonNullable: true, validators: [Validators.required] }),
+            contractor_iin_bin: new FormControl(this.defaultData.contractor_iin_bin, { nonNullable: true, validators: [Validators.required] }),
+            contractor_kbe: new FormControl(this.defaultData.contractor_kbe, { nonNullable: true }),
+            contractor_iik: new FormControl(this.defaultData.contractor_iik, { nonNullable: true, validators: [Validators.required] }),
+            contractor_bank: new FormControl(this.defaultData.contractor_bank, { nonNullable: true, validators: [Validators.required] }),
+            contractor_bik: new FormControl(this.defaultData.contractor_bik, { nonNullable: true, validators: [Validators.required] }),
 
-            preamble_closing: new FormControl(this.defaultData.preamble_closing, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
-            body_text: new FormControl(this.defaultData.body_text, {
-                nonNullable: true,
-                validators: [Validators.required]
-            }),
+            preamble_closing: new FormControl(this.defaultData.preamble_closing, { nonNullable: true, validators: [Validators.required] }),
+            body_text: new FormControl(this.defaultData.body_text, { nonNullable: true, validators: [Validators.required] }),
         });
 
         this.generatePages(this.form.getRawValue());
