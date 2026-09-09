@@ -21,7 +21,7 @@ export interface AgreementTemplateData {
     customer_signatory_name: string;
     customer_genitive: string;
     customer_basis: string;
-    customer_reg_info: string;         // Доп. инфо (номер, дата) - опционально
+    customer_reg_info: string;         // Доп. Инфо (номер, дата) - опционально
     customer_address: string;
     customer_id_type: 'БИН' | 'ИИН';   // Выбор БИН или ИИН
     customer_iin_bin: string;
@@ -36,7 +36,7 @@ export interface AgreementTemplateData {
     contractor_signatory_name: string;
     contractor_genitive: string;
     contractor_basis: string;
-    contractor_reg_info: string;       // Доп. инфо (номер, дата) - опционально
+    contractor_reg_info: string;       // Доп. Инфо (номер, дата) - опционально
     contractor_address: string;
     contractor_id_type: 'БИН' | 'ИИН'; // Выбор БИН или ИИН
     contractor_iin_bin: string;
@@ -220,11 +220,31 @@ export class AgreementTemplate implements OnInit {
         });
     }
 
+    private cleanBlockHtml(html: string): string {
+        // 1. Если это намеренная пустая строка между пунктами — оставляем как есть
+        const trimmed = html.trim();
+        if (trimmed === '<p><br></p>' || trimmed === '<p></p>' || trimmed === '<p>&nbsp;</p>') {
+            return '<p><br></p>';
+        }
+
+        // 2. Склеиваем разорванные слогами слова перед переносом: "рабо<br>ты" -> "работы"
+        let cleaned = html.replace(/([а-яА-Яa-zA-ZёЁ]+)\s*<br\s*\/?>\s*([а-яА-Яa-zA-ZёЁ]+)/gi, '$1$2');
+
+        // 3. Заменяем любые оставшиеся внутристрочные <br> на обычный пробел,
+        // чтобы justify не растягивал короткие обрезки строк от края до края
+        cleaned = cleaned.replace(/<br\s*\/?>/gi, ' ');
+
+        // 4. Схлопываем множественные пробелы и неразрывные пробелы
+        cleaned = cleaned.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ');
+
+        return cleaned;
+    }
+
     private generatePages(data: AgreementTemplateData): void {
-        const CHARS_PER_LINE = 75;
-        const LINES_PER_PAGE = 36;
-        const HEADER_LINES = 14;
-        const SIGNATURE_LINES = 22;
+        const CHARS_PER_LINE = 95;
+        const LINES_PER_PAGE = 52;
+        const HEADER_LINES = 7;
+        const SIGNATURE_LINES = 16;
 
         const generatedPages: PreviewPage[] = [];
         let currentPage: PreviewPage = {
@@ -237,27 +257,35 @@ export class AgreementTemplate implements OnInit {
         let currentLines = HEADER_LINES;
         const rawHtml = data.body_text || '';
 
-        // Захватываем блоки: целые списки, заголовки, параграфы и цитаты
-        const matches = rawHtml.match(/<(ol|ul|p|h[1-6]|blockquote)[^>]*>[\s\S]*?<\/\1>/gi) || [rawHtml];
+        const blocks = rawHtml.match(/<(ol|ul|p|h[1-6]|blockquote)[^>]*>[\s\S]*?<\/\1>/gi) || [rawHtml];
 
-        for (const htmlBlock of matches) {
-            const textOnly = htmlBlock.replace(/<[^>]*>/g, '').trim();
+        for (const rawBlock of blocks) {
+            const textOnly = rawBlock.replace(/<[^>]*>/g, '').trim();
+            const isEmpty = textOnly.length === 0 || rawBlock.includes('<br>');
 
-            const isHeading = /^<h/i.test(htmlBlock);
-            const isList = /^<(ol|ul)/i.test(htmlBlock);
-
-            let pLines: number;
-            if (textOnly.length === 0) {
-                pLines = 1.2;
-            } else if (isHeading) {
-                pLines = Math.ceil(textOnly.length / CHARS_PER_LINE) + 1.8;
-            } else if (isList) {
-                pLines = Math.ceil(textOnly.length / (CHARS_PER_LINE - 10)) + 1.0;
-            } else {
-                pLines = Math.ceil(textOnly.length / CHARS_PER_LINE) + 1.0;
+            if (isEmpty && textOnly.length === 0) {
+                if (currentLines + 1 > LINES_PER_PAGE) {
+                    generatedPages.push(currentPage);
+                    currentPage = {
+                        pageNumber: generatedPages.length + 1,
+                        showHeader: false,
+                        paragraphs: [],
+                        showSignatures: false
+                    };
+                    currentLines = 0;
+                }
+                currentPage.paragraphs.push('<p><br></p>');
+                currentLines += 1;
+                continue;
             }
 
-            if (currentLines + pLines > LINES_PER_PAGE) {
+            const block = this.cleanBlockHtml(rawBlock);
+            const cleanText = block.replace(/<[^>]*>/g, '').trim();
+
+            const isHeading = /^<h/i.test(block) || (block.includes('<strong>') && cleanText.length < 50);
+            const blockLines = Math.max(1, Math.ceil(cleanText.length / CHARS_PER_LINE) + (isHeading ? 0.4 : 0));
+
+            if (currentLines + blockLines > LINES_PER_PAGE) {
                 generatedPages.push(currentPage);
                 currentPage = {
                     pageNumber: generatedPages.length + 1,
@@ -268,8 +296,8 @@ export class AgreementTemplate implements OnInit {
                 currentLines = 0;
             }
 
-            currentPage.paragraphs.push(htmlBlock);
-            currentLines += pLines;
+            currentPage.paragraphs.push(block);
+            currentLines += blockLines;
         }
 
         if (currentLines + SIGNATURE_LINES > LINES_PER_PAGE) {

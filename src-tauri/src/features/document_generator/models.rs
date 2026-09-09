@@ -41,3 +41,43 @@ pub struct MemoTemplateData {
     pub date: String,
     pub signer_name: String,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AgreementTemplateData {
+    pub agreement_number: String,
+    pub city: String,
+    pub date: String,
+
+    // Заказчик (Сторона 1)
+    pub customer_name: String,
+    pub customer_position: String,
+    pub customer_signatory_name: String,
+    pub customer_genitive: String,
+    pub customer_basis: String,
+    pub customer_reg_info: Option<String>,
+    pub customer_address: String,
+    pub customer_id_type: String, // "БИН" или "ИИН"
+    pub customer_iin_bin: String,
+    pub customer_kbe: Option<String>,
+    pub customer_iik: String,
+    pub customer_bank: String,
+    pub customer_bik: String,
+
+    // Подрядчик (Сторона 2)
+    pub contractor_name: String,
+    pub contractor_position: String,
+    pub contractor_signatory_name: String,
+    pub contractor_genitive: String,
+    pub contractor_basis: String,
+    pub contractor_reg_info: Option<String>,
+    pub contractor_address: String,
+    pub contractor_id_type: String, // "БИН" или "ИИН"
+    pub contractor_iin_bin: String,
+    pub contractor_kbe: Option<String>,
+    pub contractor_iik: String,
+    pub contractor_bank: String,
+    pub contractor_bik: String,
+
+    pub preamble_closing: String,
+    pub body_text: String,
+}

@@ -224,7 +224,7 @@
                             }
 
                             <!-- Динамический вывод HTML-абзацев текущей страницы -->
-                            <div class="a4-body">
+                            <div class="a4-body content-flow">
                                 @for (block of page.paragraphs; track $index) {
                                     <div class="ql-editor-preview" [innerHTML]="block | safeHtml"></div>
                                 }
@@ -290,8 +290,6 @@
                                     </div>
                                 </div>
                             }
-
-                            <div class="page-number-footer">— {{ page.pageNumber }} —</div>
                         </div>
                     </div>
                 </mat-tab>
